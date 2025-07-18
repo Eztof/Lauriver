@@ -24,7 +24,7 @@ import {
   getDoc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// Deine Firebase‑Config aus der Console hier einfügen:
+// ¹ Firebase‑Config genau aus deiner Console übernehmen!
 const firebaseConfig = {
   apiKey:    "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
   authDomain:"lauriver-31a6f.firebaseapp.com",
@@ -39,17 +39,17 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-// Helper zum sicheren Elementzugriff
+// Helfer
 const $ = id => {
   const el = document.getElementById(id);
   if (!el) throw new Error(`Element #${id} nicht gefunden`);
   return el;
 };
 
-// DOM-Refs
+// DOM‑References
 const loginForm    = $("login-form");
 const registerForm = $("register-form");
-const authSection  = $("auth");
+const authSection  = $("auth-container");
 const dashboard    = $("dashboard");
 const calendar     = $("calendar");
 const packing      = $("packing");
@@ -62,9 +62,9 @@ const btnLogout    = $("btn-logout");
 const btnBack      = $("btn-back");
 const toggleDark   = $("toggle-dark");
 const counterEl    = $("counter");
-const rememberBox  = $("remember");
+const rememberBox  = $("remember-me");
 
-// Navigation Drawer
+// Drawer‑Navigation
 drawer.querySelectorAll("a[data-show]").forEach(a => {
   a.addEventListener("click", e => {
     e.preventDefault();
@@ -75,7 +75,7 @@ drawer.querySelectorAll("a[data-show]").forEach(a => {
 });
 btnMenu.addEventListener("click", () => drawer.classList.toggle("hidden"));
 
-// Login/Register Toggle
+// Login <-> Register
 $("show-register").addEventListener("click", e => {
   e.preventDefault();
   loginForm.classList.add("hidden");
@@ -87,14 +87,13 @@ $("show-login").addEventListener("click", e => {
   loginForm.classList.remove("hidden");
 });
 
-// Registrierung nur mit Benutzername + Passwort
+// Registrierung (Username + Passwort)
 registerForm.addEventListener("submit", async e => {
   e.preventDefault();
   const username = $("reg-username").value.trim();
   const pw       = $("reg-password").value;
   if (!username) return alert("Bitte Benutzernamen eingeben.");
-
-  // Dummy‑E‑Mail intern
+  // interne Dummy‑E‑Mail:
   const email = `${username}@users.lauriver.app`;
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pw);
@@ -112,23 +111,25 @@ registerForm.addEventListener("submit", async e => {
   }
 });
 
-// Login mit Benutzername
+// Login (Username -> E‑Mail -> Auth)
 loginForm.addEventListener("submit", async e => {
   e.preventDefault();
   const username = $("login-username").value.trim();
   const pw       = $("login-password").value;
   if (!username) return alert("Bitte Benutzernamen eingeben.");
 
-  // Suche User‑Doc
+  // Firestore‑Lookup auf E‑Mail
   const q = query(collection(db, "users"), where("username", "==", username));
   const snaps = await getDocs(q);
   if (snaps.empty) return alert("Benutzer nicht gefunden.");
   const { email } = snaps.docs[0].data();
 
-  // Persistence setzen
-  await setPersistence(auth, rememberBox.checked
-    ? browserLocalPersistence
-    : browserSessionPersistence);
+  // Persistence
+  await setPersistence(auth,
+    rememberBox.checked
+      ? browserLocalPersistence
+      : browserSessionPersistence
+  );
 
   try {
     await signInWithEmailAndPassword(auth, email, pw);
@@ -141,7 +142,7 @@ loginForm.addEventListener("submit", async e => {
 // Logout
 btnLogout.addEventListener("click", () => signOut(auth));
 
-// Live Counter seit 25.01.2025 18:00
+// Live Counter
 let interval;
 function startCounter() {
   const start = new Date("2025-01-25T18:00:00");
@@ -154,11 +155,9 @@ function startCounter() {
   tick();
   interval = setInterval(tick, 1000);
 }
-function stopCounter() {
-  clearInterval(interval);
-}
+function stopCounter() { clearInterval(interval); }
 
-// Auth‑State Listener
+// Auth‑State
 onAuthStateChanged(auth, user => {
   if (user) {
     authSection.classList.add("hidden");
@@ -175,7 +174,7 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// Einstellungen öffnen
+// Einstellungen
 btnSettings.addEventListener("click", async () => {
   [dashboard, calendar, packing].forEach(s => s.classList.add("hidden"));
   settings.classList.remove("hidden");

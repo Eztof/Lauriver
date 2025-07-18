@@ -1,111 +1,56 @@
-/* Utility */
 .hidden { display: none !important; }
-.icon-btn {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
+.icon-btn { background: none; border: none; font-size: 1.5rem; cursor: pointer; }
 
-/* Layout */
-body {
-  font-family: sans-serif;
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
+/* Reset & Layout */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { display: flex; flex-direction: column; min-height: 100vh; font-family: Arial, sans-serif; }
+
 header {
-  display: flex;
-  align-items: center;
-  background: #2c3e50;
-  color: #fff;
-  padding: 0.5rem 1rem;
+  display: flex; align-items: center;
+  background: #2c3e50; color: #fff; padding: 0.5rem 1rem;
 }
-header h1 {
-  flex: 1;
-  text-align: center;
-  font-size: 1.25rem;
-}
+header h1 { flex: 1; text-align: center; font-size: 1.25rem; }
+
 .drawer {
-  position: fixed;
-  top: 3.5rem;
-  left: 0;
-  width: 200px;
-  height: calc(100% - 3.5rem);
-  background: #34495e;
-  color: #ecf0f1;
-  padding: 1rem 0;
+  position: fixed; top: 3.5rem; left: 0;
+  width: 200px; height: calc(100% - 3.5rem);
+  background: #34495e; color: #ecf0f1; padding: 1rem 0; z-index: 100;
 }
 .drawer ul { list-style: none; }
 .drawer li + li { margin-top: 0.5rem; }
 .drawer a {
-  color: inherit;
-  text-decoration: none;
-  padding: 0.5rem 1rem;
-  display: block;
+  display: block; padding: 0.5rem 1rem; color: inherit; text-decoration: none;
 }
 .drawer a:hover { background: rgba(255,255,255,0.1); }
 
-/* Main Cards */
 main {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1rem;
+  flex: 1; display: flex; justify-content: center; align-items: center; padding: 1rem;
 }
 .card {
-  background: #ecf0f1;
-  padding: 1.5rem;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 360px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: #ecf0f1; padding: 1.5rem; border-radius: 8px;
+  width: 100%; max-width: 360px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 .card h2 { margin-bottom: 1rem; }
 .card input {
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 0.75rem;
-  font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  width: 100%; padding: 0.5rem; margin-bottom: 0.75rem; font-size: 1rem;
+  border: 1px solid #ccc; border-radius: 4px;
 }
-.card label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
+.card label { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
 .card button {
-  width: 100%;
-  padding: 0.75rem;
-  font-size: 1rem;
-  background: #2c3e50;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+  width: 100%; padding: 0.75rem; font-size: 1rem;
+  background: #2c3e50; color: #fff; border: none; border-radius: 4px; cursor: pointer;
 }
 .card button:hover { background: #1a252f; }
 
-#counter {
-  font-size: 1.5rem;
-  text-align: center;
-}
+#counter { font-size: 1.5rem; text-align: center; }
 
 footer {
-  background: #2c3e50;
-  color: #fff;
-  text-align: center;
-  padding: 0.75rem;
+  background: #2c3e50; color: #fff; text-align: center; padding: 0.75rem;
 }
 
 /* Dark Mode */
 body.dark {
-  background: #121212;
-  color: #eee;
+  background: #121212; color: #eee;
 }
 body.dark header,
 body.dark footer,
@@ -113,6 +58,5 @@ body.dark .drawer {
   background: #1f1f1f;
 }
 body.dark .card {
-  background: #1f1f1f;
-  color: #eee;
+  background: #1f1f1f; color: #eee;
 }
