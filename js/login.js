@@ -21,14 +21,14 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { initNav, initLogout, auth } from "./common.js";
 
-// 1) Navigation & Logout initialisieren
+// 1) Gemeinsame Navigation & Logout init
 initNav();
 initLogout();
 
-// 2) Firebase wurde in common.js initialisiert
+// 2) Firebase‑Config initialisiert in common.js
 const db = getFirestore();
 
-// 3) Redirect, falls schon eingeloggt und wir auf login.html sind
+// 3) Wenn bereits eingeloggt und auf login.html → weiter zu Dashboard
 onAuthStateChanged(auth, user => {
   const path = window.location.pathname;
   if (user && path.endsWith("login.html")) {
@@ -36,51 +36,8 @@ onAuthStateChanged(auth, user => {
   }
 });
 
-// 4) DOM‑Elemente (existieren je nach Seite)
-const loginForm    = document.getElementById("login-form");
-const registerForm = document.getElementById("register-form");
-const showRegister = document.getElementById("show-register");
-const showLogin    = document.getElementById("show-login");
-
-// 5) Login ↔ Register Toggle (nur auf login.html, wo beide Forms vorhanden sind)
-if (loginForm && registerForm && showRegister && showLogin) {
-  // Klick auf "Registrieren" zeigt das Registrierungsformular
-  showRegister.addEventListener("click", e => {
-    e.preventDefault();
-    loginForm.classList.add("hidden");
-    registerForm.classList.remove("hidden");
-  });
-  // Klick auf "Anmelden" im Registrierungsformular
-  showLogin.addEventListener("click", e => {
-    e.preventDefault();
-    registerForm.classList.add("hidden");
-    loginForm.classList.remove("hidden");
-  });
-}
-
-// 6) Registrierung (nur auf register.html)
-if (registerForm) {
-  registerForm.addEventListener("submit", async e => {
-    e.preventDefault();
-    const username = document.getElementById("reg-username").value.trim();
-    const pw       = document.getElementById("reg-password").value;
-    if (!username) return;
-    // Dummy‑E‑Mail für Firebase Auth
-    const email = `${username}@users.lauriver.app`;
-    const cred  = await createUserWithEmailAndPassword(auth, email, pw);
-    await updateProfile(cred.user, { displayName: username });
-    await setDoc(doc(db, "users", cred.user.uid), {
-      username,
-      email,
-      settings: { dark: false },
-      created: new Date()
-    });
-    // Nach Registrierung zurück zum Login
-    window.location.href = "login.html";
-  });
-}
-
-// 7) Login (nur auf login.html)
+// 4) Login-Form-Handler (falls vorhanden)
+const loginForm = document.getElementById("login-form");
 if (loginForm) {
   loginForm.addEventListener("submit", async e => {
     e.preventDefault();
@@ -88,17 +45,62 @@ if (loginForm) {
     const pw       = document.getElementById("login-password").value;
     const remember = document.getElementById("remember-me").checked;
     if (!username) return;
-    // Firestore‑Lookup nach E‑Mail
+
+    // Nutzername → E‑Mail Lookup in Firestore
     const q     = query(collection(db, "users"), where("username", "==", username));
     const snaps = await getDocs(q);
-    if (snaps.empty) return;
+    if (snaps.empty) {
+      alert("Benutzername nicht gefunden.");
+      return;
+    }
     const { email } = snaps.docs[0].data();
+
+    // Persistence setzen
     await setPersistence(auth,
       remember
         ? browserLocalPersistence
         : browserSessionPersistence
     );
-    await signInWithEmailAndPassword(auth, email, pw);
-    // onAuthStateChanged (common.js) kümmert sich um Weiterleitung
+
+    // Login
+    try {
+      await signInWithEmailAndPassword(auth, email, pw);
+      // Weiterleitung übernimmt common.js → onAuthStateChanged
+    } catch (err) {
+      console.error(err);
+      alert("Anmeldefehler: " + err.message);
+    }
+  });
+}
+
+// 5) Register-Form-Handler (falls vorhanden)
+const registerForm = document.getElementById("register-form");
+if (registerForm) {
+  registerForm.addEventListener("submit", async e => {
+    e.preventDefault();
+    const username = document.getElementById("reg-username").value.trim();
+    const pw       = document.getElementById("reg-password").value;
+    if (!username) return;
+
+    // Dummy‑E‑Mail intern für Firebase Auth
+    const email = `${username}@users.lauriver.app`;
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pw);
+      // displayName setzen
+      await updateProfile(cred.user, { displayName: username });
+      // User‑Doc in Firestore anlegen
+      await setDoc(doc(db, "users", cred.user.uid), {
+        username,
+        email,
+        settings: { dark: false },
+        created: new Date()
+      });
+      // Nach Registrierung → Login
+      window.location.href = "login.html";
+    } catch (err) {
+      console.error(err);
+      alert("Registrierungsfehler: " + err.message);
+    }
   });
 }
