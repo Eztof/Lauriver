@@ -28,7 +28,7 @@ import {
   deleteDoc
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 1️⃣ Dein Firebase‑Config aus der Console
+// Firebase‑Config aus der Console
 const firebaseConfig = {
   apiKey:    "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
   authDomain:"lauriver-31a6f.firebaseapp.com",
@@ -65,13 +65,12 @@ const btnSettings  = $("btn-settings");
 const btnLogout    = $("btn-logout");
 const btnBack      = $("btn-back");
 const toggleDark   = $("toggle-dark");
-const counterEl    = $("counter");
 const rememberBox  = $("remember-me");
 const packingForm  = $("packing-form");
 const newItemInput = $("new-item");
 const listEl       = $("packing-list");
 
-// Navigation Drawer
+// Drawer‑Navigation
 drawer.querySelectorAll("a[data-show]").forEach(a => {
   a.addEventListener("click", e => {
     e.preventDefault();
@@ -111,7 +110,7 @@ registerForm.addEventListener("submit", async e => {
   });
 });
 
-// Login: Username → Lookup → signIn
+// Login: Username → Lookup → Auth
 loginForm.addEventListener("submit", async e => {
   e.preventDefault();
   const username = $("login-username").value.trim();
@@ -121,32 +120,15 @@ loginForm.addEventListener("submit", async e => {
   const snaps= await getDocs(q);
   if (snaps.empty) return;
   const { email } = snaps.docs[0].data();
-  await setPersistence(auth,
-    rememberBox.checked
-      ? browserLocalPersistence
-      : browserSessionPersistence
+  await setPersistence(auth, rememberBox.checked
+    ? browserLocalPersistence
+    : browserSessionPersistence
   );
   await signInWithEmailAndPassword(auth, email, pw);
 });
 
 // Logout
 btnLogout.addEventListener("click", () => signOut(auth));
-
-// Live Counter (wird nicht angezeigt)
-let interval;
-function startCounter() {
-  const start = new Date("2025-01-25T18:00:00");
-  function tick(){
-    /* const diff=Date.now()-start.getTime();
-       const days=Math.floor(diff/86400000);
-       const hms=new Date(diff%86400000).toISOString().substr(11,8);
-       counterEl.textContent=`${days} Tage ${hms}`;
-    */
-  }
-  tick();
-  interval = setInterval(tick,1000);
-}
-function stopCounter(){ clearInterval(interval); }
 
 // Auth‑State
 onAuthStateChanged(auth, user => {
@@ -155,61 +137,54 @@ onAuthStateChanged(auth, user => {
     headerIcons.classList.remove("hidden");
     btnMenu.classList.remove("hidden");
     dashboard.classList.remove("hidden");
-    startCounter();
     initPacking();
   } else {
     authSection.classList.remove("hidden");
     headerIcons.classList.add("hidden");
     btnMenu.classList.add("hidden");
-    [dashboard, calendar, packing, settings].forEach(s=>s.classList.add("hidden"));
-    stopCounter();
+    [dashboard, calendar, packing, settings].forEach(s => s.classList.add("hidden"));
   }
 });
 
 // Packliste: Realtime‑Listener & Interaktionen
 function initPacking() {
-  onSnapshot(collection(db, "packing"), snap=>{
+  onSnapshot(collection(db, "packing"), snap => {
     listEl.innerHTML = "";
-    snap.forEach(docSnap=>{
+    snap.forEach(docSnap => {
       const data = docSnap.data();
       const li = document.createElement("li");
       li.className = "packing-item";
 
-      // grün, wenn alle Beteiligten abgehakt
-      const all = data.participants || [];
-      const done= data.checked || [];
-      if (all.length && all.every(u=> done.includes(u))) {
+      const all  = data.participants || [];
+      const done = data.checked || [];
+      if (all.length && all.every(u => done.includes(u))) {
         li.classList.add("green");
       }
 
-      // Checkbox
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = done.includes(auth.currentUser.uid);
-      cb.onchange = async ()=>{
+      cb.onchange = async () => {
         const idx = done.indexOf(auth.currentUser.uid);
-        if (cb.checked && idx===-1) done.push(auth.currentUser.uid);
-        if (!cb.checked && idx!==-1) done.splice(idx,1);
-        await updateDoc(doc(db,"packing",docSnap.id), { checked: done });
+        if (cb.checked && idx === -1) done.push(auth.currentUser.uid);
+        if (!cb.checked && idx !== -1) done.splice(idx, 1);
+        await updateDoc(doc(db, "packing", docSnap.id), { checked: done });
       };
       li.append(cb);
 
-      // Text
       const span = document.createElement("span");
       span.textContent = data.description;
       li.append(span);
 
-      // Participants count
       const p = document.createElement("div");
       p.className = "participants";
       p.textContent = `Beteiligte: ${all.length}`;
       li.append(p);
 
-      // Delete für owner
       if (data.createdBy === auth.currentUser.uid) {
         const del = document.createElement("button");
         del.textContent = "✖";
-        del.onclick = ()=> deleteDoc(doc(db,"packing",docSnap.id));
+        del.onclick = () => deleteDoc(doc(db, "packing", docSnap.id));
         li.append(del);
       }
 
@@ -218,15 +193,15 @@ function initPacking() {
   });
 }
 
-// Hinzufügen neuer Einträge
-packingForm.addEventListener("submit", async e=>{
+// Neues Packing-Item
+packingForm.addEventListener("submit", async e => {
   e.preventDefault();
   const desc = newItemInput.value.trim();
   if (!desc) return;
-  await addDoc(collection(db,"packing"), {
+  await addDoc(collection(db, "packing"), {
     description: desc,
     createdBy: auth.currentUser.uid,
-    participants: [ auth.currentUser.uid ],
+    participants: [auth.currentUser.uid],
     checked: [],
     createdAt: new Date()
   });
@@ -234,24 +209,24 @@ packingForm.addEventListener("submit", async e=>{
 });
 
 // Einstellungen öffnen
-btnSettings.addEventListener("click", async ()=>{
-  [dashboard, calendar, packing].forEach(s=>s.classList.add("hidden"));
+btnSettings.addEventListener("click", async () => {
+  [dashboard, calendar, packing].forEach(s => s.classList.add("hidden"));
   settings.classList.remove("hidden");
-  const snap = await getDoc(doc(db,"users", auth.currentUser.uid));
+  const snap = await getDoc(doc(db, "users", auth.currentUser.uid));
   const opts = snap.data()?.settings || {};
   toggleDark.checked = !!opts.dark;
-  document.body.classList.toggle("dark",opts.dark);
+  document.body.classList.toggle("dark", opts.dark);
 });
 
 // Zurück aus Einstellungen
-btnBack.addEventListener("click", ()=>{
+btnBack.addEventListener("click", () => {
   settings.classList.add("hidden");
   dashboard.classList.remove("hidden");
 });
 
 // Dark‑Mode Toggle
-toggleDark.addEventListener("change", async ()=>{
+toggleDark.addEventListener("change", async () => {
   const on = toggleDark.checked;
-  document.body.classList.toggle("dark",on);
-  await setDoc(doc(db,"users",auth.currentUser.uid), { settings:{ dark:on } }, { merge:true });
+  document.body.classList.toggle("dark", on);
+  await setDoc(doc(db, "users", auth.currentUser.uid), { settings: { dark: on } }, { merge: true });
 });
