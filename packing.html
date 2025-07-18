@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Packliste – Lauriver</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/packing.js" defer></script>
+</head>
+<body>
+  <header> 
+    <button id="btn-menu" class="icon-btn">☰</button>
+    <h1>Packliste</h1>
+    <div id="header-icons">
+      <a href="settings.html">⚙️</a>
+      <button id="btn-logout">⎋</button>
+    </div>
+  </header>
+  <nav id="drawer" class="drawer hidden">
+    <ul>
+      <li><a href="dashboard.html">Startseite</a></li>
+      <li><a href="calendar.html">Kalender</a></li>
+      <li><a href="packing.html">Packliste</a></li>
+      <li><a href="settings.html">Einstellungen</a></li>
+    </ul>
+  </nav>
+  <main>
+    <section class="card">
+      <form id="packing-form" class="packing-form">
+        <input id="new-item" type="text" placeholder="Neuen Eintrag hinzufügen" required>
+        <button type="submit">Hinzufügen</button>
+      </form>
+      <ul id="packing-list"></ul>
+    </section>
+  </main>
+  <footer><p>&copy; 2025 Lauriver</p></footer>
+</body>
+</html>

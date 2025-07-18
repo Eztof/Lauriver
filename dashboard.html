@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Dashboard – Lauriver</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/dashboard.js" defer></script>
+</head>
+<body>
+  <header> 
+    <button id="btn-menu" class="icon-btn">☰</button>
+    <h1>Lauriver</h1>
+    <div id="header-icons">
+      <a href="settings.html">⚙️</a>
+      <button id="btn-logout">⎋</button>
+    </div>
+  </header>
+  <nav id="drawer" class="drawer hidden">
+    <ul>
+      <li><a href="dashboard.html">Startseite</a></li>
+      <li><a href="calendar.html">Kalender</a></li>
+      <li><a href="packing.html">Packliste</a></li>
+      <li><a href="settings.html">Einstellungen</a></li>
+    </ul>
+  </nav>
+  <main>
+    <section class="card">
+      <h2>Seit Start vergangen:</h2>
+      <div id="counter">-- Tage --:--:--:--</div>
+    </section>
+  </main>
+  <footer><p>&copy; 2025 Lauriver</p></footer>
+</body>
+</html>
