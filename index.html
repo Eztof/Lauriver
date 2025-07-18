@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Lauriver</title>
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/style.css" />
   <script defer type="module" src="js/app.js"></script>
 </head>
 <body>
@@ -27,9 +27,8 @@
   </nav>
 
   <main>
-    <!-- Wrapper für Login/Register -->
+    <!-- Auth -->
     <section id="auth-container" class="card">
-      <!-- Login -->
       <form id="login-form">
         <h2>Anmelden</h2>
         <input id="login-username" type="text" placeholder="Benutzername" required autocomplete="username">
@@ -38,7 +37,6 @@
         <button type="submit">Anmelden</button>
         <p><a href="#" id="show-register">Registrieren</a></p>
       </form>
-      <!-- Registrierung -->
       <form id="register-form" class="hidden">
         <h2>Registrieren</h2>
         <input id="reg-username" type="text" placeholder="Benutzername" required autocomplete="username">
@@ -48,22 +46,27 @@
       </form>
     </section>
 
-    <!-- Dashboard/Startseite -->
+    <!-- Startseite (leer) -->
     <section id="dashboard" class="card hidden">
-      <h2>Seit Start vergangen:</h2>
-      <div id="counter">-- Tage --:--:--:--</div>
+      <!-- kein Inhalt mehr -->
     </section>
 
-    <!-- Kalender Platzhalter -->
+    <!-- Kalender -->
     <section id="calendar" class="card hidden">
       <h2>Kalender</h2>
-      <p>Platzhalter für deinen Kalender.</p>
+      <p>Platzhalter</p>
     </section>
 
-    <!-- Packliste Platzhalter -->
+    <!-- Packliste -->
     <section id="packing" class="card hidden">
       <h2>Packliste</h2>
-      <p>Platzhalter für deine Packliste.</p>
+      <!-- Neuen Eintrag -->
+      <form id="packing-form" class="packing-form">
+        <input id="new-item" type="text" placeholder="Neuen Eintrag hinzufügen" required>
+        <button type="submit">Hinzufügen</button>
+      </form>
+      <!-- Liste der Einträge -->
+      <ul id="packing-list"></ul>
     </section>
 
     <!-- Einstellungen -->
