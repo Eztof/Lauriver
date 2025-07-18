@@ -8,12 +8,12 @@
   <script type="module" src="js/dashboard.js" defer></script>
 </head>
 <body>
-  <header> 
-    <button id="btn-menu" class="icon-btn">☰</button>
+  <header>
+    <button id="btn-menu" class="icon-btn hidden" aria-label="Navigation">☰</button>
     <h1>Lauriver</h1>
-    <div id="header-icons">
-      <a href="settings.html">⚙️</a>
-      <button id="btn-logout">⎋</button>
+    <div id="header-icons" class="hidden">
+      <a href="settings.html" class="icon-btn" aria-label="Einstellungen">⚙️</a>
+      <button id="btn-logout" class="icon-btn" aria-label="Abmelden">⎋</button>
     </div>
   </header>
   <nav id="drawer" class="drawer hidden">
@@ -27,7 +27,7 @@
   <main>
     <section class="card">
       <h2>Seit Start vergangen:</h2>
-      <div id="counter">-- Tage --:--:--:--</div>
+      <div id="counter">-- Tage --:--:--:--</div>
     </section>
   </main>
   <footer><p>&copy; 2025 Lauriver</p></footer>
