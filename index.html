@@ -1,37 +1,79 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Startseite</title>
-  <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lauriver – Laufzeit seit 25.01.2025</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: sans-serif;
+      background: #f0f0f0;
+    }
+    #countdown {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    #countdown span {
+      display: inline-block;
+      min-width: 60px;
+      font-size: 2rem;
+    }
+    #label span {
+      display: inline-block;
+      min-width: 60px;
+      font-size: 0.8rem;
+      color: #666;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div class="card">
-      <h2>Willkommen, <span id="user-name">…</span>!</h2>
-      <button id="logout">Ausloggen</button>
+  <div id="countdown">
+    <div id="numbers">
+      <span id="days">0</span> :
+      <span id="hours">00</span> :
+      <span id="minutes">00</span> :
+      <span id="seconds">00</span>
+    </div>
+    <div id="label">
+      <span>Tage</span>
+      <span>Std</span>
+      <span>Min</span>
+      <span>Sek</span>
     </div>
   </div>
-  <div class="nav-footer">
-    <a href="settings.html">⚙️ Einstellungen</a>
-    <a href="calendar.html">📅 Kalender</a>
-    <a href="packlist.html">🧳 Packliste</a>
-  </div>
 
-  <script type="module" src="js/firebase.js"></script>
-  <script type="module">
-    import { auth, db } from "./js/firebase.js";
-    import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-    // Nutzernamen anzeigen
-    auth.onAuthStateChanged(async user => {
-      if (user) {
-        const snap = await getDoc(doc(db, "users", user.uid));
-        document.getElementById('user-name').textContent = snap.exists() ? snap.data().username : "Gast";
-      }
-    });
-    // auth.js für Logout laden
-    import "./js/auth.js";
+  <script>
+    // Ziel-Datum: 25. Januar 2025 um 00:00 (UTC+1 Berlin)
+    const startDate = new Date('2025-01-25T00:00:00+01:00').getTime();
+
+    function updateCounter() {
+      const now = new Date().getTime();
+      let diff = now - startDate; // Millisekunden seit Start
+
+      if (diff < 0) diff = 0; // Falls Datum noch bevorsteht
+
+      const days    = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours   = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+      document.getElementById('days').textContent    = days;
+      document.getElementById('hours').textContent   = String(hours).padStart(2,'0');
+      document.getElementById('minutes').textContent = String(minutes).padStart(2,'0');
+      document.getElementById('seconds').textContent = String(seconds).padStart(2,'0');
+    }
+
+    // Erstes Update sofort, dann jede Sekunde
+    updateCounter();
+    setInterval(updateCounter, 1000);
   </script>
 </body>
 </html>
