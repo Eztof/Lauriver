@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lauriver Login</title>
+  <style>
+    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f0f0; }
+    #login-container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; }
+    #countdown { text-align: center; }
+    #countdown span { display: inline-block; min-width: 50px; font-size: 2rem; }
+  </style>
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+</head>
+<body>
+  <div id="login-container">
+    <!-- Login-Form -->
+    <h2>Login</h2>
+    <input id="email"     type="email"    placeholder="E‑Mail"    /><br/><br/>
+    <input id="password"  type="password" placeholder="Passwort"  /><br/><br/>
+    <button id="btn-login">Anmelden / Registrieren</button>
+    <p id="msg" style="color:red;"></p>
+  </div>
+
+  <div id="countdown" style="display:none;">
+    <h2>Laufzeit seit 25.01.2025</h2>
+    <div>
+      <span id="days">0</span> :
+      <span id="hours">00</span> :
+      <span id="minutes">00</span> :
+      <span id="seconds">00</span>
+    </div>
+  </div>
+
+  <script>
+    // 1) Firebase initialisieren
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
+      authDomain: "lauriver-31a6f.firebaseapp.com",
+      projectId: "lauriver-31a6f",
+      storageBucket: "lauriver-31a6f.firebasestorage.app",
+      messagingSenderId: "508140835438",
+      appId: "1:508140835438:web:4326ed6b40c01037e64c7f",
+      databaseURL: "https://lauriver-31a6f-default-rtdb.europe-west1.firebasedatabase.app/"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const dbFs = firebase.firestore();
+    const dbRt = firebase.database();
+
+    // 2) Login / Registrierung
+    document.getElementById('btn-login').addEventListener('click', async () => {
+      const email = document.getElementById('email').value;
+      const pw    = document.getElementById('password').value;
+      const msgEl = document.getElementById('msg');
+      msgEl.textContent = '';
+
+      try {
+        // Versuche Anmeldung
+        const userCred = await auth.signInWithEmailAndPassword(email, pw);
+        startApp(userCred.user);
+      } catch (err) {
+        if (err.code === 'auth/user-not-found') {
+          // Wenn noch nicht registriert: registrieren
+          try {
+            const userCred = await auth.createUserWithEmailAndPassword(email, pw);
+            startApp(userCred.user);
+          } catch (e) {
+            msgEl.textContent = e.message;
+          }
+        } else {
+          msgEl.textContent = err.message;
+        }
+      }
+    });
+
+    // 3) App nach Login starten
+    function startApp(user) {
+      // Beispiel: einmalig Daten in Firestore schreiben
+      dbFs.collection('users').doc(user.uid).set({
+        email: user.email,
+        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+
+      // Beispiel: in Realtime DB schreiben
+      dbRt.ref('logins/' + user.uid).push({
+        timestamp: Date.now(),
+        userAgent: navigator.userAgent
+      });
+
+      // Login-Form verbergen, Countdown anzeigen
+      document.getElementById('login-container').style.display = 'none';
+      document.getElementById('countdown').style.display       = 'block';
+
+      initCountdown(); 
+    }
+
+    // 4) Countdown-Funktion (wie vorher)
+    function initCountdown() {
+      const startDate = new Date('2025-01-25T00:00:00+01:00').getTime();
+      function update() {
+        const now  = Date.now();
+        let diff   = now - startDate;
+        if (diff < 0) diff = 0;
+        const days    = Math.floor(diff / (1000*60*60*24));
+        const hours   = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+        const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
+        const seconds = Math.floor((diff % (1000*60)) / 1000);
+        document.getElementById('days').textContent    = days;
+        document.getElementById('hours').textContent   = String(hours).padStart(2,'0');
+        document.getElementById('minutes').textContent = String(minutes).padStart(2,'0');
+        document.getElementById('seconds').textContent = String(seconds).padStart(2,'0');
+      }
+      update();
+      setInterval(update, 1000);
+    }
+
+    // 5) Optional: automatisch App starten, wenn schon eingeloggt
+    auth.onAuthStateChanged(user => {
+      if (user) startApp(user);
+    });
+  </script>
+</body>
+</html>
