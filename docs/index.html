@@ -3,76 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lauriver Login</title>
+  <title>Lauriver Dashboard</title>
   <style>
-    :root {
-      font-size: 16px;
-    }
-    * {
-      box-sizing: border-box;
-    }
+    :root { font-size: 16px; }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: sans-serif;
+      background: #f0f0f0;
       display: flex;
       justify-content: center;
       align-items: center;
       min-height: 100vh;
-      background: #f0f0f0;
       padding: 1rem;
     }
-    #login-container, #countdown {
+    /* Login & Dashboard Container */
+    #login-container, #dashboard, #app-container {
       background: #fff;
       width: 100%;
-      max-width: 360px;
+      max-width: 400px;
       padding: 1.5rem;
       border-radius: 8px;
       box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
-    h2 {
-      margin-top: 0;
-      text-align: center;
-      font-size: 1.5rem;
-    }
-    input {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+    /* Login */
+    #login-container h2 { text-align: center; margin-top: 0; }
+    #login-container input {
+      width: 100%; padding: 0.75rem; margin-bottom: 1rem;
+      border: 1px solid #ccc; border-radius: 4px;
       font-size: 1rem;
     }
-    button {
-      width: 100%;
-      padding: 0.75rem;
-      font-size: 1rem;
-      border: none;
-      border-radius: 4px;
-      background: #007bff;
-      color: #fff;
-      cursor: pointer;
+    #login-container button {
+      width: 100%; padding: 0.75rem; font-size: 1rem;
+      border: none; border-radius: 4px;
+      background: #007bff; color: #fff; cursor: pointer;
     }
-    button:active { opacity: 0.9; }
-    #msg {
-      margin-top: 0.5rem;
-      color: #c00;
-      font-size: 0.9rem;
-      text-align: center;
+    #login-container button:active { opacity: 0.9; }
+    #login-container label {
+      font-size: 0.9rem; display: flex; align-items: center;
     }
-    #countdown div {
-      display: flex;
-      justify-content: space-around;
-      font-size: 2rem;
-      margin: 1rem 0;
+    #login-container label input {
+      width: auto; margin-right: 0.5rem;
     }
-    #countdown span.label {
-      font-size: 0.8rem;
-      color: #666;
+    #login-container #msg {
+      text-align: center; color: #c00; font-size: 0.9rem; min-height:1.2em;
     }
-    @media (max-width: 400px) {
-      h2 { font-size: 1.25rem; }
-      input, button { font-size: 0.9rem; padding: 0.65rem; }
-      #countdown div { font-size: 1.5rem; }
+    /* Dashboard Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 1rem;
+    }
+    .card {
+      background:#fff; padding:1rem; border-radius:8px;
+      box-shadow:0 1px 5px rgba(0,0,0,0.1);
+      text-align:center; cursor:pointer;
+    }
+    .card h3 { margin:0; font-size:1rem; }
+    .card .preview { font-size:1.5rem; margin-top:0.5rem; color:#007bff; }
+    /* App Container */
+    #app-container { margin-top:1rem; }
+    @media(max-width:400px){
+      #login-container, #dashboard, #app-container { max-width:100%; }
+      .card { padding:0.75rem; }
     }
   </style>
 
@@ -83,38 +76,41 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
 </head>
 <body>
+  <!-- LOGIN -->
   <div id="login-container">
-    <h2>Anmelden</h2>
-    <input id="username" type="text"    placeholder="Nutzername" autocomplete="username" />
-    <input id="password" type="password" placeholder="Passwort"   autocomplete="current-password" />
+    <h2>Login</h2>
+    <input id="username" type="text" placeholder="Nutzername" autocomplete="username" />
+    <input id="password" type="password" placeholder="Passwort" autocomplete="current-password" />
+    <label><input type="checkbox" id="remember" /> Merken auf diesem Gerät</label>
     <button id="btn-login">Anmelden / Registrieren</button>
-    <p id="msg"></p>
+    <div id="msg"></div>
   </div>
 
-  <div id="countdown" style="display:none;">
-    <h2>Laufzeit seit 25.01.2025</h2>
-    <div>
-      <div>
-        <div id="days">0</div>
-        <div class="label">Tage</div>
+  <!-- DASHBOARD (versteckt bis Login) -->
+  <div id="dashboard" style="display:none;">
+    <h2>Dashboard</h2>
+    <div class="grid">
+      <div class="card" id="app-countdown">
+        <h3>Countdown</h3>
+        <div class="preview" id="cd-preview">…</div>
       </div>
-      <div>
-        <div id="hours">00</div>
-        <div class="label">Std</div>
+      <div class="card" id="app-calendar">
+        <h3>Kalender</h3>
+        <div class="preview">📅</div>
       </div>
-      <div>
-        <div id="minutes">00</div>
-        <div class="label">Min</div>
-      </div>
-      <div>
-        <div id="seconds">00</div>
-        <div class="label">Sek</div>
+      <div class="card" id="app-packing">
+        <h3>Packliste</h3>
+        <div class="preview">🧳</div>
       </div>
     </div>
   </div>
 
-  <script>
-    // Firebase initialisieren
+  <!-- APP CONTAINER -->
+  <div id="app-container" style="display:none;"></div>
+
+  <!-- Main Script -->
+  <script type="module">
+    // 1) Firebase init
     const firebaseConfig = {
       apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
       authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -127,90 +123,74 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const dbFs = firebase.firestore();
-    const dbRt = firebase.database();
 
-    // Login/Registrierung per Nutzername
+    // 2) Persistence je nach Checkbox
+    const chkRemember = document.getElementById('remember');
+    chkRemember.addEventListener('change', () => {
+      const p = chkRemember.checked
+        ? firebase.auth.Auth.Persistence.LOCAL
+        : firebase.auth.Auth.Persistence.SESSION;
+      auth.setPersistence(p);
+    });
+
+    // 3) Login / Registrierung (Username → dummy‑Email mapping)
     document.getElementById('btn-login').addEventListener('click', async () => {
-      const userEl = document.getElementById('username');
-      const passEl = document.getElementById('password');
-      const msgEl  = document.getElementById('msg');
-      const username = userEl.value.trim();
-      const password = passEl.value;
-      msgEl.textContent = '';
-
-      if (!username || !password) {
-        msgEl.textContent = 'Bitte Nutzername und Passwort eingeben.';
-        return;
-      }
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      const msg = document.getElementById('msg');
+      msg.textContent = '';
+      if (!u || !p) return msg.textContent = 'Bitte ausfüllen';
 
       try {
-        // Mapping in Firestore: collection "usernames", docId = username
-        const unameRef = dbFs.collection('usernames').doc(username);
-        const unameDoc = await unameRef.get();
-
+        // Mapping in Firestore
+        const ref = dbFs.collection('usernames').doc(u);
+        const doc = await ref.get();
         let email;
-        if (unameDoc.exists) {
-          // Login: hole hinterlegtes E-Mail-Pendant
-          email = unameDoc.data().email;
-          await auth.signInWithEmailAndPassword(email, password);
+        if (doc.exists) {
+          email = doc.data().email;
+          await auth.signInWithEmailAndPassword(email, p);
         } else {
-          // Registrierung: generiere Dummy-Email, lege User an
-          email = `${username}@lauriver-31a6f.firebaseapp.com`;
-          const userCred = await auth.createUserWithEmailAndPassword(email, password);
-          const uid = userCred.user.uid;
-          // Mapping abspeichern
-          await unameRef.set({ uid, email });
-          // Basis-Userprofil
-          await dbFs.collection('users').doc(uid).set({
-            username,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
+          email = `${u}@lauriver-31a6f.firebaseapp.com`;
+          const cred = await auth.createUserWithEmailAndPassword(email, p);
+          await ref.set({ email });
+          await dbFs.collection('users').doc(cred.user.uid)
+            .set({ username: u, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
         }
-
-        // Login erfolgreich → App starten
-        startApp(auth.currentUser);
-
-      } catch (err) {
-        console.error(err);
-        msgEl.textContent = err.message;
+      } catch (e) {
+        msg.textContent = e.message;
       }
     });
 
-    // Wenn Session noch da ist
+    // 4) onAuthStateChanged → Dashboard anzeigen
     auth.onAuthStateChanged(user => {
-      if (user) startApp(user);
+      if (user) {
+        document.getElementById('login-container').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        document.getElementById('app-container').style.display = 'none';
+        // Vorschau-Countdown initial
+        import('./apps/countdown.js').then(m => {
+          const days = m.getDaysSince();
+          document.getElementById('cd-preview').textContent = days + ' d';
+        });
+      } else {
+        document.getElementById('login-container').style.display = 'block';
+        document.getElementById('dashboard').style.display = 'none';
+        document.getElementById('app-container').style.display = 'none';
+      }
     });
 
-    function startApp(user) {
-      // Schreib-Beispiel in Realtime-DB
-      dbRt.ref(`logins/${user.uid}`).push({
-        ts: Date.now(),
-        ua: navigator.userAgent
+    // 5) Dashboard-Karten anklickbar machen
+    document.querySelectorAll('.card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const app = card.id.replace('app-',''); // "countdown", "calendar", "packing"
+        const container = document.getElementById('app-container');
+        container.style.display = 'block';
+        document.getElementById('dashboard').style.display = 'none';
+        // Modul dynamisch laden und rendern
+        const mod = await import(`./apps/${app}.js`);
+        mod.render(container, { auth, dbFs });
       });
-
-      document.getElementById('login-container').style.display = 'none';
-      document.getElementById('countdown').style.display       = 'block';
-      initCountdown();
-    }
-
-    function initCountdown() {
-      const startDate = new Date('2025-01-25T00:00:00+01:00').getTime();
-      function update() {
-        const now  = Date.now();
-        let diff   = now - startDate;
-        if (diff < 0) diff = 0;
-        const days    = Math.floor(diff / 86400000);
-        const hours   = Math.floor((diff % 86400000) / 3600000);
-        const minutes = Math.floor((diff % 3600000)  / 60000);
-        const seconds = Math.floor((diff % 60000)     / 1000);
-        document.getElementById('days').textContent    = days;
-        document.getElementById('hours').textContent   = String(hours).padStart(2,'0');
-        document.getElementById('minutes').textContent = String(minutes).padStart(2,'0');
-        document.getElementById('seconds').textContent = String(seconds).padStart(2,'0');
-      }
-      update();
-      setInterval(update, 1000);
-    }
+    });
   </script>
 </body>
 </html>
