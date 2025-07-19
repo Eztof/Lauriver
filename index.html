@@ -1,42 +1,23 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Lauriver</title>
-  <script type="module">
-    // 1️⃣ Firebase core + Auth
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-
-    // 2️⃣ Konfig aus deiner Firebase‑Console
-    const firebaseConfig = {
-      apiKey:    "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
-      authDomain:"lauriver-31a6f.firebaseapp.com",
-      projectId: "lauriver-31a6f",
-      storageBucket:"lauriver-31a6f.appspot.com",
-      messagingSenderId:"508140835438",
-      appId:     "1:508140835438:web:4326ed6b40c01037e64c7f"
-    };
-    initializeApp(firebaseConfig);
-
-    // 3️⃣ Prüfen, ob der User eingeloggt ist und weiterleiten
-    const auth = getAuth();
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        // schon eingeloggt → Dashboard
-        window.location.replace("dashboard.html");
-      } else {
-        // nicht eingeloggt → Login
-        window.location.replace("login.html");
-      }
-    });
-  </script>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Startseite</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <p>Lade Lauriver…</p>
-  <p>Falls nicht, <a href="login.html">hier zum Login</a> oder <a href="dashboard.html">hier zur Startseite</a>.</p>
+  <div class="container">
+    <h1>Startseite</h1>
+    <button id="logout">Ausloggen</button>
+  </div>
+  <div class="nav-footer">
+    <a href="settings.html">⚙️ Einstellungen</a>
+    <a href="calendar.html">📅 Kalender</a>
+    <a href="packlist.html">🧳 Packliste</a>
+  </div>
+
+  <script type="module" src="js/firebase.js"></script>
+  <script type="module" src="js/auth.js"></script>
 </body>
 </html>

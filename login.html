@@ -2,24 +2,30 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Login – Lauriver</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lauriver Login</title>
   <link rel="stylesheet" href="css/style.css">
-  <script type="module" src="js/login.js" defer></script>
 </head>
 <body>
-  <main>
-    <section class="card" id="auth-container">
-      <!-- Login-Form -->
-      <form id="login-form">
-        <h2>Anmelden</h2>
-        <input id="login-username" type="text" placeholder="Benutzername" required autocomplete="username">
-        <input id="login-password" type="password" placeholder="Passwort" required autocomplete="current-password">
-        <label><input id="remember-me" type="checkbox"> Gerät merken</label>
-        <button type="submit">Anmelden</button>
-      </form>
-      <p><a href="register.html">Registrieren</a></p>
-    </section>
-  </main>
+  <div class="container">
+    <h1>Willkommen</h1>
+    <!-- Login -->
+    <form id="login-form">
+      <input type="email" name="email" placeholder="E‑Mail" required>
+      <input type="password" name="password" placeholder="Passwort" required>
+      <label><input type="checkbox" id="remember"> Angemeldet bleiben</label>
+      <button type="submit">Einloggen</button>
+    </form>
+    <hr>
+    <!-- Signup -->
+    <form id="signup-form">
+      <input type="email" name="email" placeholder="E‑Mail neu" required>
+      <input type="password" name="password" placeholder="Passwort neu" required>
+      <button type="submit">Registrieren</button>
+    </form>
+  </div>
+
+  <script type="module" src="js/auth.js"></script>
+  <script type="module" src="js/firebase.js"></script>
 </body>
 </html>

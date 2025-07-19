@@ -2,33 +2,27 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Einstellungen – Lauriver</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Einstellungen</title>
   <link rel="stylesheet" href="css/style.css">
-  <script type="module" src="js/settings.js" defer></script>
 </head>
 <body>
-  <header>
-    <button id="btn-menu" class="icon-btn hidden" aria-label="Navigation">☰</button>
+  <div class="container">
     <h1>Einstellungen</h1>
-    <div id="header-icons" class="hidden">
-      <button id="btn-logout" class="icon-btn" aria-label="Abmelden">⎋</button>
-    </div>
-  </header>
-  <nav id="drawer" class="drawer hidden">
-    <ul>
-      <li><a href="dashboard.html">Startseite</a></li>
-      <li><a href="calendar.html">Kalender</a></li>
-      <li><a href="packing.html">Packliste</a></li>
-      <li><a href="settings.html">Einstellungen</a></li>
-    </ul>
-  </nav>
-  <main>
-    <section class="card">
-      <label><input id="toggle-dark" type="checkbox"> Dunkelmodus</label>
-      <button id="btn-back">Zurück zur Startseite</button>
-    </section>
-  </main>
-  <footer><p>&copy; 2025 Lauriver</p></footer>
+    <label>
+      <input type="checkbox" id="dark-toggle">
+      Dark‑Mode
+    </label>
+    <button id="logout">Ausloggen</button>
+  </div>
+  <div class="nav-footer">
+    <a href="index.html">🏠 Home</a>
+    <a href="calendar.html">📅 Kalender</a>
+    <a href="packlist.html">🧳 Packliste</a>
+  </div>
+
+  <script type="module" src="js/firebase.js"></script>
+  <script type="module" src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
 </body>
 </html>
