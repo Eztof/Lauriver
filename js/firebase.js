@@ -6,29 +6,28 @@ import {
 import { getFirestore } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
+  apiKey: "...",
   authDomain: "lauriver-31a6f.firebaseapp.com",
   projectId: "lauriver-31a6f",
   storageBucket: "lauriver-31a6f.firebasestorage.app",
-  messagingSenderId: "508140835438",
-  appId: "1:508140835438:web:4326ed6b40c01037e64c7f"
+  messagingSenderId: "...",
+  appId: "..."
 };
 
 export const app  = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db   = getFirestore(app);
 
-// Automatische Weiterleitung: nur schützen, wenn echte App‑Seiten
+// Auth-State & Redirect-Logik
 onAuthStateChanged(auth, user => {
   const path = location.pathname.split("/").pop();
   const publicPages = ["login.html", "signup.html"];
-  const isPublic = publicPages.includes(path);
-  if (!user && !isPublic) {
-    // Nicht eingeloggt und nicht auf Public-Seite → Login
+  if (!user && !publicPages.includes(path)) {
+    console.log("[Firebase] User not logged in → redirect to login");
     location.replace("login.html");
   }
   if (user && path === "signup.html") {
-    // Bereits eingeloggt, aber auf Signup → Startseite
+    console.log("[Firebase] Already logged in → redirect to home");
     location.replace("index.html");
   }
 });

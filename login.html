@@ -8,29 +8,17 @@
 </head>
 <body>
   <div class="container">
-    <h1>Einloggen</h1>
+    <div class="header"><h1>Einloggen</h1></div>
     <form id="login-form">
-      <input
-        type="text"
-        name="username"
-        placeholder="Nutzername"
-        autocomplete="username"
-        required>
-      <input
-        type="password"
-        name="password"
-        placeholder="Passwort"
-        autocomplete="current-password"
-        required>
-      <label>
-        <input type="checkbox" id="remember">
-        Angemeldet bleiben
-      </label>
+      <input type="text" name="username" placeholder="Nutzername" autocomplete="username" required>
+      <input type="password" name="password" placeholder="Passwort" autocomplete="current-password" required>
+      <label><input type="checkbox" id="remember"> Angemeldet bleiben</label>
       <button type="submit">Einloggen</button>
     </form>
-    <p><a href="signup.html">Registrieren</a></p>
+    <p style="text-align:center; margin-top:1rem;">
+      <a href="signup.html">Registrieren</a>
+    </p>
   </div>
-
   <script type="module" src="js/auth.js"></script>
   <script type="module" src="js/firebase.js"></script>
 </body>

@@ -10,6 +10,12 @@ a { text-decoration: none; color: inherit; }
   padding: 1rem;
 }
 
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
 /* Buttons & Inputs */
 input, button {
   width: 100%;
@@ -19,7 +25,20 @@ input, button {
   border: 1px solid #ccc;
   font-size: 1rem;
 }
-button { cursor: pointer; }
+button { cursor: pointer; background: #0066ff; color: #fff; border: none; }
+
+/* Startseite Card */
+.card {
+  background: var(--bg-alt);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  margin-bottom: 1rem;
+}
+.card h2 {
+  margin-bottom: 1rem;
+  font-size: 1.25rem;
+}
 
 /* Nav Footer */
 .nav-footer {
@@ -28,15 +47,16 @@ button { cursor: pointer; }
   display: flex; justify-content: space-around;
   background: var(--bg);
   padding: .5rem 0;
+  border-top: 1px solid #ddd;
 }
 .nav-footer a { text-align: center; font-size: .9rem; }
 
 /* Dark Mode */
 :root {
-  --bg: #fff; --fg: #000;
+  --bg: #fff; --fg: #000; --bg-alt: #f7f7f7;
 }
 [data-theme="dark"] {
-  --bg: #121212; --fg: #eee;
+  --bg: #121212; --fg: #eee; --bg-alt: #1e1e1e;
 }
 body {
   background: var(--bg);
