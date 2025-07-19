@@ -10,12 +10,25 @@
   <div class="container">
     <h1>Einloggen</h1>
     <form id="login-form">
-      <input type="text" name="username" placeholder="Nutzername" required>
-      <input type="password" name="password" placeholder="Passwort" required>
-      <label><input type="checkbox" id="remember"> Angemeldet bleiben</label>
+      <input
+        type="text"
+        name="username"
+        placeholder="Nutzername"
+        autocomplete="username"
+        required>
+      <input
+        type="password"
+        name="password"
+        placeholder="Passwort"
+        autocomplete="current-password"
+        required>
+      <label>
+        <input type="checkbox" id="remember">
+        Angemeldet bleiben
+      </label>
       <button type="submit">Einloggen</button>
     </form>
-    <p>Neu hier? <a href="signup.html">Registrieren</a></p>
+    <p><a href="signup.html">Registrieren</a></p>
   </div>
 
   <script type="module" src="js/auth.js"></script>

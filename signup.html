@@ -10,11 +10,21 @@
   <div class="container">
     <h1>Registrieren</h1>
     <form id="signup-form">
-      <input type="text" name="username" placeholder="Nutzername" required>
-      <input type="password" name="password" placeholder="Passwort" required>
+      <input
+        type="text"
+        name="username"
+        placeholder="Nutzername"
+        autocomplete="username"
+        required>
+      <input
+        type="password"
+        name="password"
+        placeholder="Passwort"
+        autocomplete="new-password"
+        required>
       <button type="submit">Registrieren</button>
     </form>
-    <p>Schon Konto? <a href="login.html">Einloggen</a></p>
+    <p><a href="login.html">Zurück zum Login</a></p>
   </div>
 
   <script type="module" src="js/auth.js"></script>
