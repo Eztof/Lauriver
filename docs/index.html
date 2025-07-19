@@ -5,11 +5,77 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lauriver Login</title>
   <style>
-    body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f0f0; }
-    #login-container { background: #fff; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 300px; }
-    #countdown { text-align: center; }
-    #countdown span { display: inline-block; min-width: 50px; font-size: 2rem; }
+    :root {
+      font-size: 16px;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: #f0f0f0;
+      padding: 1rem;
+    }
+    #login-container, #countdown {
+      background: #fff;
+      width: 100%;
+      max-width: 360px;
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      margin-top: 0;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      background: #007bff;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:active { opacity: 0.9; }
+    #msg {
+      margin-top: 0.5rem;
+      color: #c00;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    #countdown div {
+      display: flex;
+      justify-content: space-around;
+      font-size: 2rem;
+      margin: 1rem 0;
+    }
+    #countdown span.label {
+      font-size: 0.8rem;
+      color: #666;
+    }
+    @media (max-width: 400px) {
+      h2 { font-size: 1.25rem; }
+      input, button { font-size: 0.9rem; padding: 0.65rem; }
+      #countdown div { font-size: 1.5rem; }
+    }
   </style>
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -18,26 +84,37 @@
 </head>
 <body>
   <div id="login-container">
-    <!-- Login-Form -->
-    <h2>Login</h2>
-    <input id="email"     type="email"    placeholder="E‑Mail"    /><br/><br/>
-    <input id="password"  type="password" placeholder="Passwort"  /><br/><br/>
+    <h2>Anmelden</h2>
+    <input id="username" type="text"    placeholder="Nutzername" autocomplete="username" />
+    <input id="password" type="password" placeholder="Passwort"   autocomplete="current-password" />
     <button id="btn-login">Anmelden / Registrieren</button>
-    <p id="msg" style="color:red;"></p>
+    <p id="msg"></p>
   </div>
 
   <div id="countdown" style="display:none;">
     <h2>Laufzeit seit 25.01.2025</h2>
     <div>
-      <span id="days">0</span> :
-      <span id="hours">00</span> :
-      <span id="minutes">00</span> :
-      <span id="seconds">00</span>
+      <div>
+        <div id="days">0</div>
+        <div class="label">Tage</div>
+      </div>
+      <div>
+        <div id="hours">00</div>
+        <div class="label">Std</div>
+      </div>
+      <div>
+        <div id="minutes">00</div>
+        <div class="label">Min</div>
+      </div>
+      <div>
+        <div id="seconds">00</div>
+        <div class="label">Sek</div>
+      </div>
     </div>
   </div>
 
   <script>
-    // 1) Firebase initialisieren
+    // Firebase initialisieren
     const firebaseConfig = {
       apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
       authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -52,64 +129,80 @@
     const dbFs = firebase.firestore();
     const dbRt = firebase.database();
 
-    // 2) Login / Registrierung
+    // Login/Registrierung per Nutzername
     document.getElementById('btn-login').addEventListener('click', async () => {
-      const email = document.getElementById('email').value;
-      const pw    = document.getElementById('password').value;
-      const msgEl = document.getElementById('msg');
+      const userEl = document.getElementById('username');
+      const passEl = document.getElementById('password');
+      const msgEl  = document.getElementById('msg');
+      const username = userEl.value.trim();
+      const password = passEl.value;
       msgEl.textContent = '';
 
+      if (!username || !password) {
+        msgEl.textContent = 'Bitte Nutzername und Passwort eingeben.';
+        return;
+      }
+
       try {
-        // Versuche Anmeldung
-        const userCred = await auth.signInWithEmailAndPassword(email, pw);
-        startApp(userCred.user);
-      } catch (err) {
-        if (err.code === 'auth/user-not-found') {
-          // Wenn noch nicht registriert: registrieren
-          try {
-            const userCred = await auth.createUserWithEmailAndPassword(email, pw);
-            startApp(userCred.user);
-          } catch (e) {
-            msgEl.textContent = e.message;
-          }
+        // Mapping in Firestore: collection "usernames", docId = username
+        const unameRef = dbFs.collection('usernames').doc(username);
+        const unameDoc = await unameRef.get();
+
+        let email;
+        if (unameDoc.exists) {
+          // Login: hole hinterlegtes E-Mail-Pendant
+          email = unameDoc.data().email;
+          await auth.signInWithEmailAndPassword(email, password);
         } else {
-          msgEl.textContent = err.message;
+          // Registrierung: generiere Dummy-Email, lege User an
+          email = `${username}@lauriver-31a6f.firebaseapp.com`;
+          const userCred = await auth.createUserWithEmailAndPassword(email, password);
+          const uid = userCred.user.uid;
+          // Mapping abspeichern
+          await unameRef.set({ uid, email });
+          // Basis-Userprofil
+          await dbFs.collection('users').doc(uid).set({
+            username,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
         }
+
+        // Login erfolgreich → App starten
+        startApp(auth.currentUser);
+
+      } catch (err) {
+        console.error(err);
+        msgEl.textContent = err.message;
       }
     });
 
-    // 3) App nach Login starten
-    function startApp(user) {
-      // Beispiel: einmalig Daten in Firestore schreiben
-      dbFs.collection('users').doc(user.uid).set({
-        email: user.email,
-        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-      }, { merge: true });
+    // Wenn Session noch da ist
+    auth.onAuthStateChanged(user => {
+      if (user) startApp(user);
+    });
 
-      // Beispiel: in Realtime DB schreiben
-      dbRt.ref('logins/' + user.uid).push({
-        timestamp: Date.now(),
-        userAgent: navigator.userAgent
+    function startApp(user) {
+      // Schreib-Beispiel in Realtime-DB
+      dbRt.ref(`logins/${user.uid}`).push({
+        ts: Date.now(),
+        ua: navigator.userAgent
       });
 
-      // Login-Form verbergen, Countdown anzeigen
       document.getElementById('login-container').style.display = 'none';
       document.getElementById('countdown').style.display       = 'block';
-
-      initCountdown(); 
+      initCountdown();
     }
 
-    // 4) Countdown-Funktion (wie vorher)
     function initCountdown() {
       const startDate = new Date('2025-01-25T00:00:00+01:00').getTime();
       function update() {
         const now  = Date.now();
         let diff   = now - startDate;
         if (diff < 0) diff = 0;
-        const days    = Math.floor(diff / (1000*60*60*24));
-        const hours   = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
-        const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
-        const seconds = Math.floor((diff % (1000*60)) / 1000);
+        const days    = Math.floor(diff / 86400000);
+        const hours   = Math.floor((diff % 86400000) / 3600000);
+        const minutes = Math.floor((diff % 3600000)  / 60000);
+        const seconds = Math.floor((diff % 60000)     / 1000);
         document.getElementById('days').textContent    = days;
         document.getElementById('hours').textContent   = String(hours).padStart(2,'0');
         document.getElementById('minutes').textContent = String(minutes).padStart(2,'0');
@@ -118,11 +211,6 @@
       update();
       setInterval(update, 1000);
     }
-
-    // 5) Optional: automatisch App starten, wenn schon eingeloggt
-    auth.onAuthStateChanged(user => {
-      if (user) startApp(user);
-    });
   </script>
 </body>
 </html>
