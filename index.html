@@ -16,26 +16,30 @@
     <!-- Registration Form -->
     <section id="register-section" class="auth-section hidden">
       <h2>Registrieren</h2>
-      <input id="reg-username" type="text" placeholder="Benutzername" />
-      <input id="reg-password" type="password" placeholder="Passwort" />
-      <label>
-        <input id="reg-remember" type="checkbox" />
-        Gerät merken
-      </label>
-      <button id="btn-register">Registrieren</button>
+      <form id="form-register">
+        <input id="reg-username" type="text" placeholder="Benutzername" required />
+        <input id="reg-password" type="password" placeholder="Passwort" required />
+        <label>
+          <input id="reg-remember" type="checkbox" />
+          Gerät merken
+        </label>
+        <button id="btn-register" type="submit">Registrieren</button>
+      </form>
       <p>Oder <a href="#" id="show-login">einloggen</a></p>
     </section>
 
     <!-- Login Form -->
     <section id="login-section" class="auth-section">
       <h2>Login</h2>
-      <input id="login-username" type="text" placeholder="Benutzername" />
-      <input id="login-password" type="password" placeholder="Passwort" />
-      <label>
-        <input id="login-remember" type="checkbox" />
-        Gerät merken
-      </label>
-      <button id="btn-login">Einloggen</button>
+      <form id="form-login">
+        <input id="login-username" type="text" placeholder="Benutzername" required />
+        <input id="login-password" type="password" placeholder="Passwort" required />
+        <label>
+          <input id="login-remember" type="checkbox" />
+          Gerät merken
+        </label>
+        <button id="btn-login" type="submit">Einloggen</button>
+      </form>
       <p>Oder <a href="#" id="show-register">registrieren</a></p>
     </section>
 

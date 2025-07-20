@@ -25,8 +25,8 @@ function setPersistence(remember) {
 
 // Registrierung
 document.getElementById('btn-register').addEventListener('click', () => {
-  const u = document.getElementById('reg-username').value.trim();
-  const p = document.getElementById('reg-password').value;
+  const u   = document.getElementById('reg-username').value.trim();
+  const p   = document.getElementById('reg-password').value;
   const rem = document.getElementById('reg-remember').checked;
   if (!u || !p) return alert('Bitte Benutzername und Passwort eingeben.');
 
@@ -38,8 +38,8 @@ document.getElementById('btn-register').addEventListener('click', () => {
 
 // Login
 document.getElementById('btn-login').addEventListener('click', () => {
-  const u = document.getElementById('login-username').value.trim();
-  const p = document.getElementById('login-password').value;
+  const u   = document.getElementById('login-username').value.trim();
+  const p   = document.getElementById('login-password').value;
   const rem = document.getElementById('login-remember').checked;
   if (!u || !p) return alert('Bitte Benutzername und Passwort eingeben.');
 
@@ -52,8 +52,9 @@ document.getElementById('btn-login').addEventListener('click', () => {
 function setupUserData(user, username) {
   const docRef = firestore.collection('users').doc(user.uid);
   const now = Date.now();
-  docRef.get().then(doc => {
-    if (!doc.exists) {
+
+  docRef.get().then(docSnap => {
+    if (!docSnap.exists) {
       // Neu anlegen
       docRef.set({
         username,
