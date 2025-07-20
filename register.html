@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Registrieren – Lauriver</title>
+  <!-- Firebase App (core SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script>
+    // Deine Firebase-Konfiguration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
+      authDomain: "lauriver-31a6f.firebaseapp.com",
+      projectId: "lauriver-31a6f",
+      storageBucket: "lauriver-31a6f.firebasestorage.app",
+      messagingSenderId: "508140835438",
+      appId: "1:508140835438:web:4326ed6b40c01037e64c7f"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #fafafa; }
+    form { display: flex; flex-direction: column; width: 300px; }
+    input, button { margin: 8px 0; padding: 10px; font-size: 1rem; }
+    button { cursor: pointer; }
+    a { text-decoration: none; color: #0066cc; }
+  </style>
+</head>
+<body>
+  <h1>Registrieren</h1>
+  <form id="register-form">
+    <input type="email" id="reg-email" placeholder="E‑Mail" required>
+    <input type="password" id="reg-pass" placeholder="Passwort" required>
+    <button type="submit">Registrieren</button>
+  </form>
+  <p>Schon angemeldet? <a href="login.html">Zum Login</a></p>
+
+  <script>
+    const auth = firebase.auth();
+    document.getElementById('register-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const email = document.getElementById('reg-email').value;
+      const pass  = document.getElementById('reg-pass').value;
+      auth.createUserWithEmailAndPassword(email, pass)
+        .then(() => {
+          // Direkt nach Registrierung einloggen und weiterleiten
+          window.location.href = 'index.html';
+        })
+        .catch(err => {
+          alert('Fehler: ' + err.message);
+        });
+    });
+  </script>
+</body>
+</html>

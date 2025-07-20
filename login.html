@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Login – Lauriver</title>
+  <!-- Firebase App (core SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script>
+    // Deine Firebase-Konfiguration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
+      authDomain: "lauriver-31a6f.firebaseapp.com",
+      projectId: "lauriver-31a6f",
+      storageBucket: "lauriver-31a6f.firebasestorage.app",
+      messagingSenderId: "508140835438",
+      appId: "1:508140835438:web:4326ed6b40c01037e64c7f"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #fafafa; }
+    form { display: flex; flex-direction: column; width: 300px; }
+    input, button { margin: 8px 0; padding: 10px; font-size: 1rem; }
+    button { cursor: pointer; }
+    a { text-decoration: none; color: #0066cc; }
+  </style>
+</head>
+<body>
+  <h1>Anmelden</h1>
+  <form id="login-form">
+    <input type="email" id="login-email" placeholder="E‑Mail" required>
+    <input type="password" id="login-pass" placeholder="Passwort" required>
+    <button type="submit">Login</button>
+  </form>
+  <p>Noch kein Account? <a href="register.html">Registrieren</a></p>
+
+  <script>
+    const auth = firebase.auth();
+    document.getElementById('login-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const pass  = document.getElementById('login-pass').value;
+      auth.signInWithEmailAndPassword(email, pass)
+        .then(() => {
+          window.location.href = 'index.html';
+        })
+        .catch(err => {
+          alert('Fehler: ' + err.message);
+        });
+    });
+  </script>
+</body>
+</html>

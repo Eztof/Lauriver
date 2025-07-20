@@ -3,51 +3,74 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Countdown seit dem 25.01.2025</title>
-  <link rel="stylesheet" href="assets/style.css">
+  <title>Countdown – Lauriver</title>
+  <!-- Firebase App (core SDK) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <!-- Firebase Auth -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script>
+    // Deine Firebase-Konfiguration
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
+      authDomain: "lauriver-31a6f.firebaseapp.com",
+      projectId: "lauriver-31a6f",
+      storageBucket: "lauriver-31a6f.firebasestorage.app",
+      messagingSenderId: "508140835438",
+      appId: "1:508140835438:web:4326ed6b40c01037e64c7f"
+    };
+    firebase.initializeApp(firebaseConfig);
+  </script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-      background: #f0f0f0;
-    }
-    #count {
-      font-size: 2rem;
-      color: #333;
-    }
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; margin: 0; padding: 1rem; background: #eef2f5; }
+    header { width: 100%; display: flex; justify-content: flex-end; }
+    button { padding: 8px 12px; margin-bottom: 1rem; cursor: pointer; }
+    main { text-align: center; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+    #count { font-size: 2rem; margin-top: 1rem; }
   </style>
 </head>
 <body>
-  <h1>Seit dem 25. Januar 2025 sind vergangen:</h1>
-  <div id="count">Lade…</div>
+  <!-- Auth‑Schutz -->
+  <script>
+    const auth = firebase.auth();
+    auth.onAuthStateChanged(user => {
+      if (!user) {
+        // Nicht angemeldet → Login
+        window.location.href = 'login.html';
+      }
+    });
+  </script>
+
+  <header>
+    <button id="logout">Ausloggen</button>
+  </header>
+
+  <main>
+    <h1>Seit dem 25. Januar 2025 sind vergangen:</h1>
+    <div id="count">Lade…</div>
+  </main>
 
   <script>
-    // Ziel-Datum setzen (UTC)
-    const startDate = new Date('2025-01-25T00:00:00Z');
+    // Logout-Handler
+    document.getElementById('logout').addEventListener('click', () => {
+      firebase.auth().signOut().then(() => {
+        window.location.href = 'login.html';
+      });
+    });
 
+    // Countdown
+    const startDate = new Date('2025-01-25T00:00:00Z');
     function updateCounter() {
       const now = new Date();
-      let diff = now - startDate; // Millisekunden seit Start
-
-      if (diff < 0) diff = 0;     // falls Datum noch in der Zukunft
-
-      const seconds = Math.floor(diff / 1000) % 60;
-      const minutes = Math.floor(diff / (1000 * 60)) % 60;
-      const hours   = Math.floor(diff / (1000 * 60 * 60)) % 24;
-      const days    = Math.floor(diff / (1000 * 60 * 60 * 24));
-
+      let diff = now - startDate;
+      if (diff < 0) diff = 0;
+      const secs = Math.floor(diff / 1000) % 60;
+      const mins = Math.floor(diff / (1000 * 60)) % 60;
+      const hrs  = Math.floor(diff / (1000 * 60 * 60)) % 24;
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
       document.getElementById('count').textContent =
-        `${days} Tage, ${hours} Stunden, ${minutes} Minuten, ${seconds} Sekunden`;
+        `${days} Tage, ${hrs} Stunden, ${mins} Minuten, ${secs} Sekunden`;
     }
-
-    // Update jede Sekunde
     setInterval(updateCounter, 1000);
-    // Sofort initialisieren
     updateCounter();
   </script>
 </body>
