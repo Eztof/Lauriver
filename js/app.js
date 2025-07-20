@@ -1,4 +1,4 @@
-// 1) Firebase-SDK importieren (Auth + Firestore)
+// 1) Firebase‑SDK importieren (Auth + Firestore)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getAuth,
@@ -13,12 +13,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore,
-  collection,
-  addDoc,
+  doc,
+  setDoc,
+  updateDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 2) Deine Firebase-Konfiguration
+// 2) Deine Firebase‑Konfiguration
 const firebaseConfig = {
   apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
   authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -30,30 +31,31 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db = getFirestore(app);  // Firestore-Instanz
+const db = getFirestore(app);
 
-// 3) Helper: aus Benutzername eine (künstliche) E-Mail machen
+// 3) Hilfsfunktion für Nutzungs‑Updates
+async function updateUsage(updates) {
+  const user = auth.currentUser;
+  if (!user) return;
+  const ref = doc(db, "usage_logs", user.uid);
+  const data = {
+    ...updates,
+    lastUpdate: serverTimestamp()
+  };
+  try {
+    // merge = true sorgt dafür, dass nur die angegebenen Felder geändert werden
+    await setDoc(ref, data, { merge: true });
+  } catch (err) {
+    console.error("Fehler beim Update der Nutzungsdaten:", err);
+  }
+}
+
+// 4) Helper: aus Benutzername eine E‑Mail machen
 function emailFromUsername(username) {
   return `${username}@lauriver.app`;
 }
 
-// 4) Firestore: Nutzungsdaten speichern
-async function logUsage(eventType, details = {}) {
-  const user = auth.currentUser;
-  if (!user) return;
-  try {
-    await addDoc(collection(db, "usage_logs"), {
-      uid: user.uid,
-      event: eventType,
-      details,
-      timestamp: serverTimestamp()
-    });
-  } catch (err) {
-    console.error("Fehler beim Speichern der Nutzungsdaten:", err);
-  }
-}
-
-// 5) Alle View-Abschnitte & Buttons holen
+// 5) Views & Buttons referenzieren
 const sections = {
   login:      document.getElementById("login-section"),
   register:   document.getElementById("register-section"),
@@ -62,30 +64,29 @@ const sections = {
   packlist:   document.getElementById("packlist-section"),
   timeline:   document.getElementById("timeline-section")
 };
-const header      = document.getElementById("main-header");
-const logoutBtn   = document.getElementById("logout-btn");
+const header    = document.getElementById("main-header");
+const logoutBtn = document.getElementById("logout-btn");
 
-// 6) View-Wechsel
+// 6) View‑Wechsel mit Logging
 function showView(name) {
   Object.values(sections).forEach(s => s.classList.add("hidden"));
   sections[name].classList.remove("hidden");
-  // Nutzungsdaten: Seitenwechsel
-  logUsage("view_change", { view: name });
+  updateUsage({ [`lastView_${name}`]: serverTimestamp() });
 }
 
-// 7) Auth-Status überwachen
+// 7) Auth‑Listener mit Erst‑Setup
 onAuthStateChanged(auth, user => {
   if (user) {
     header.classList.remove("hidden");
     showView("home");
-    logUsage("auto_login");  // wenn z.B. Persistenz greift
+    updateUsage({ lastLogin: serverTimestamp(), displayName: user.displayName });
   } else {
     header.classList.add("hidden");
     showView("login");
   }
 });
 
-// 8) Login-Form
+// 8) Login‑Form
 document.getElementById("login-form").addEventListener("submit", e => {
   e.preventDefault();
   const u = document.getElementById("login-username").value.trim();
@@ -96,12 +97,12 @@ document.getElementById("login-form").addEventListener("submit", e => {
   setPersistence(auth, persistence)
     .then(() => signInWithEmailAndPassword(auth, emailFromUsername(u), p))
     .then(() => {
-      logUsage("login", { method: "password", remember });
+      updateUsage({ lastLogin: serverTimestamp(), remember });
     })
     .catch(err => alert("Fehler beim Einloggen: " + err.message));
 });
 
-// 9) Registrieren-Form
+// 9) Registration‑Form
 document.getElementById("register-form").addEventListener("submit", e => {
   e.preventDefault();
   const u  = document.getElementById("register-username").value.trim();
@@ -113,16 +114,19 @@ document.getElementById("register-form").addEventListener("submit", e => {
   }
 
   createUserWithEmailAndPassword(auth, emailFromUsername(u), p1)
-    .then(userCred =>
-      updateProfile(userCred.user, { displayName: u })
-        .then(() => {
-          logUsage("register", { username: u });
-        })
-    )
+    .then(async userCred => {
+      await updateProfile(userCred.user, { displayName: u });
+      // Initialisiere das Nutzungs‑Dokument bereits bei Registration
+      await setDoc(doc(db, "usage_logs", userCred.user.uid), {
+        createdAt: serverTimestamp(),
+        lastLogin: serverTimestamp(),
+        displayName: u
+      });
+    })
     .catch(err => alert("Fehler bei der Registrierung: " + err.message));
 });
 
-// 10) Links zwischen Login/Registrierung
+// 10) Links zwischen Login & Registrierung
 document.getElementById("to-register").addEventListener("click", e => {
   e.preventDefault();
   showView("register");
@@ -132,11 +136,10 @@ document.getElementById("to-login").addEventListener("click", e => {
   showView("login");
 });
 
-// 11) Logout-Button
-logoutBtn.addEventListener("click", () => {
-  logUsage("logout").then(() => {
-    signOut(auth);
-  });
+// 11) Logout‑Button mit Logging
+logoutBtn.addEventListener("click", async () => {
+  await updateUsage({ lastLogout: serverTimestamp() });
+  signOut(auth);
 });
 
 // 12) Navigation Startseite → Platzhalter
@@ -144,7 +147,7 @@ document.getElementById("nav-calendar").addEventListener("click", () => showView
 document.getElementById("nav-packlist").addEventListener("click", () => showView("packlist"));
 document.getElementById("nav-timeline").addEventListener("click", () => showView("timeline"));
 
-// 13) Zurück-Buttons in den Untermenüs
+// 13) Zurück‑Buttons in den Untermenüs
 document.querySelectorAll(".back-btn").forEach(btn =>
   btn.addEventListener("click", () => showView("home"))
 );
