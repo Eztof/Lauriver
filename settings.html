@@ -4,14 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Einstellungen – Lauriver</title>
-  <!-- Firebase App (core SDK) -->
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script>
-    // Firebase-Konfiguration
+    // Firebase init
     const firebaseConfig = {
       apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
       authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -24,78 +23,56 @@
     const auth = firebase.auth();
     const db   = firebase.firestore();
   </script>
+
+  <!-- Gemeinsame CSS & Dark‑Mode‑Loader -->
+  <link rel="stylesheet" href="style.css">
+  <script src="darkmode.js" defer></script>
+
   <style>
-    body { font-family: Arial, sans-serif; margin:0; padding:1rem; background:#eef2f5; }
-    header { display:flex; align-items:center; }
-    header button { margin-right:auto; padding:8px 12px; cursor:pointer; }
-    main { max-width:400px; margin:2rem auto; background:#fff; padding:20px; box-shadow:0 0 10px rgba(0,0,0,0.1); border-radius:8px; }
-    h1 { margin-top:0; text-align:center; }
-    label { display:flex; align-items:center; margin:12px 0; }
+    main { max-width:400px; margin:2rem auto; padding:20px; }
+    label { display:flex; align-items:center; margin:1rem 0; }
     label input { margin-right:8px; }
-    button.save { display:block; width:100%; padding:10px; font-size:1rem; cursor:pointer; }
+    button.save { width:100%; padding:10px; font-size:1rem; }
   </style>
 </head>
 <body>
   <script>
     auth.onAuthStateChanged(user => {
       if (!user) return window.location.href = 'login.html';
-      // ansonsten laden wir die Einstellungen
-      const ref = db.collection('users').doc(user.uid);
-      ref.get().then(doc => {
-        if (!doc.exists) return;
-        const settings = doc.data().settings || {};
-        document.getElementById('dark-mode').checked = !!settings.darkMode;
-        document.getElementById('show-countdown').checked = settings.showCountdown !== false;
+      // Einstellungen laden
+      db.collection('users').doc(user.uid).get().then(doc => {
+        const dm = doc.data().settings?.darkMode;
+        document.getElementById('dark-mode').checked = !!dm;
       });
     });
   </script>
 
   <header>
-    <button id="back">← Zurück</button>
+    <button onclick="location.href='index.html'">← Start</button>
     <h2>Einstellungen</h2>
   </header>
 
   <main>
-    <h1>Deine Einstellungen</h1>
+    <h1>Dark Mode</h1>
     <label>
       <input type="checkbox" id="dark-mode">
-      Dark Mode aktivieren
-    </label>
-    <label>
-      <input type="checkbox" id="show-countdown">
-      Countdown anzeigen
+      Dunkles Design aktivieren
     </label>
     <button class="save" id="save-btn">Speichern</button>
   </main>
 
   <script>
-    document.getElementById('back').addEventListener('click', () => {
-      window.location.href = 'index.html';
-    });
-
-    document.getElementById('save-btn').addEventListener('click', () => {
-      const dark = document.getElementById('dark-mode').checked;
-      const showCD = document.getElementById('show-countdown').checked;
-      const uid = auth.currentUser.uid;
-      db.collection('users').doc(uid).update({
-        'settings.darkMode': dark,
-        'settings.showCountdown': showCD
-      }).then(() => {
-        alert('Einstellungen gespeichert');
-      }).catch(err => {
-        alert('Fehler: ' + err.message);
-      });
-    });
-
-    // Realtime-Anpassung von Dark Mode
+    // Live‑Toggle
     document.getElementById('dark-mode').addEventListener('change', e => {
-      if (e.target.checked) {
-        document.body.style.background = '#333';
-        document.body.style.color = '#eee';
-      } else {
-        document.body.style.background = '#eef2f5';
-        document.body.style.color = '#000';
-      }
+      document.documentElement.classList.toggle('dark', e.target.checked);
+    });
+    // Speichern
+    document.getElementById('save-btn').addEventListener('click', () => {
+      const on = document.getElementById('dark-mode').checked;
+      db.collection('users').doc(auth.currentUser.uid)
+        .update({ 'settings.darkMode': on })
+        .then(() => alert('Gespeichert!'))
+        .catch(err => alert('Fehler: ' + err.message));
     });
   </script>
 </body>

@@ -4,14 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Start – Lauriver</title>
-  <!-- Firebase App (core SDK) -->
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script>
-    // Firebase-Konfiguration
+    // Deine Firebase-Konfiguration
     const firebaseConfig = {
       apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
       authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -24,59 +23,20 @@
     const auth = firebase.auth();
     const db   = firebase.firestore();
   </script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 1rem;
-      background: #eef2f5;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-    }
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header button {
-      padding: 8px 12px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-    }
-    #count {
-      font-size: 2rem;
-      margin: 1rem 0;
-    }
-    .nav-buttons {
-      margin-top: 1.5rem;
-    }
-    .nav-buttons button {
-      margin: 0 8px;
-      padding: 10px 16px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-  </style>
+
+  <!-- Gemeinsame CSS & Dark‑Mode‑Loader -->
+  <link rel="stylesheet" href="style.css">
+  <script src="darkmode.js" defer></script>
 </head>
 <body>
   <script>
-    // Authentifizierung prüfen und Nutzungsdaten updaten
+    // Auth‑Check + Nutzungsdaten updaten
     auth.onAuthStateChanged(user => {
       if (!user) {
         window.location.href = 'login.html';
       } else {
-        // visits inkrementieren
         db.collection('users').doc(user.uid).update({
-          visits: firebase.firestore.FieldValue.increment(1),
+          visits:    firebase.firestore.FieldValue.increment(1),
           lastVisit: firebase.firestore.FieldValue.serverTimestamp()
         });
       }
@@ -91,40 +51,35 @@
   <main>
     <h1>Seit dem 25. Januar 2025 sind vergangen:</h1>
     <div id="count">Lade…</div>
-
     <div class="nav-buttons">
       <button id="to-packliste">Packliste</button>
     </div>
   </main>
 
   <script>
-    // Logout-Button
+    // Navigation
     document.getElementById('logout-btn').addEventListener('click', () => {
       auth.signOut().then(() => window.location.href = 'login.html');
     });
-
-    // Settings-Button
     document.getElementById('settings-btn').addEventListener('click', () => {
       window.location.href = 'settings.html';
     });
-
-    // Packliste-Button
     document.getElementById('to-packliste').addEventListener('click', () => {
       window.location.href = 'packliste.html';
     });
 
-    // Countdown-Logik
+    // Countdown‑Logik
     const startDate = new Date('2025-01-25T00:00:00Z');
-    function updateCounter() {
-      const now = new Date();
-      let diff = now - startDate;
+    function updateCounter(){
+      const now  = new Date();
+      let diff    = now - startDate;
       if (diff < 0) diff = 0;
-      const secs = Math.floor(diff / 1000) % 60;
-      const mins = Math.floor(diff / (1000 * 60)) % 60;
-      const hrs  = Math.floor(diff / (1000 * 60 * 60)) % 24;
-      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const days  = Math.floor(diff / 86400000);
+      const hrs   = Math.floor(diff / 3600000) % 24;
+      const mins  = Math.floor(diff / 60000) % 60;
+      const secs  = Math.floor(diff / 1000) % 60;
       document.getElementById('count').textContent =
-        `${days} Tage, ${hrs} Stunden, ${mins} Minuten, ${secs} Sekunden`;
+        `${days} Tage, ${hrs} Stunden, ${mins} Minuten, ${secs} Sekunden`;
     }
     setInterval(updateCounter, 1000);
     updateCounter();
