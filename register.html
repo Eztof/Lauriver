@@ -9,7 +9,6 @@
   <!-- Firebase Auth -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
   <script>
-    // Deine Firebase-Konfiguration
     const firebaseConfig = {
       apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
       authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -21,35 +20,57 @@
     firebase.initializeApp(firebaseConfig);
   </script>
   <style>
-    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background: #fafafa; }
-    form { display: flex; flex-direction: column; width: 300px; }
-    input, button { margin: 8px 0; padding: 10px; font-size: 1rem; }
-    button { cursor: pointer; }
-    a { text-decoration: none; color: #0066cc; }
+    body { font-family: Arial, sans-serif; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; background:#fafafa; }
+    form { display:flex; flex-direction:column; width:280px; }
+    input, button, label { margin:8px 0; padding:8px; font-size:1rem; }
+    button { cursor:pointer; }
+    a { color:#0066cc; text-decoration:none; }
   </style>
 </head>
 <body>
-  <h1>Registrieren</h1>
   <form id="register-form">
-    <input type="email" id="reg-email" placeholder="E‑Mail" required>
+    <h1>Registrieren</h1>
+    <input type="text" id="reg-user" placeholder="Benutzername" required>
     <input type="password" id="reg-pass" placeholder="Passwort" required>
+    <label>
+      <input type="checkbox" id="remember" checked>
+      Gerät merken
+    </label>
     <button type="submit">Registrieren</button>
+    <p>Schon einen Account? <a href="login.html">Zum Login</a></p>
   </form>
-  <p>Schon angemeldet? <a href="login.html">Zum Login</a></p>
 
   <script>
     const auth = firebase.auth();
+    const domain = 'lauriver-31a6f.firebaseapp.com'; // für Dummy-E-Mail
     document.getElementById('register-form').addEventListener('submit', e => {
       e.preventDefault();
-      const email = document.getElementById('reg-email').value;
-      const pass  = document.getElementById('reg-pass').value;
-      auth.createUserWithEmailAndPassword(email, pass)
+      const username = document.getElementById('reg-user').value.trim();
+      const password = document.getElementById('reg-pass').value;
+      const remember = document.getElementById('remember').checked;
+      const email = `${username}@${domain}`;
+
+      const persistence = remember
+        ? firebase.auth.Auth.Persistence.LOCAL
+        : firebase.auth.Auth.Persistence.SESSION;
+
+      auth.setPersistence(persistence)
         .then(() => {
-          // Direkt nach Registrierung einloggen und weiterleiten
+          return auth.createUserWithEmailAndPassword(email, password);
+        })
+        .then(cred => {
+          // DisplayName auf Username setzen
+          return cred.user.updateProfile({ displayName: username });
+        })
+        .then(() => {
           window.location.href = 'index.html';
         })
         .catch(err => {
-          alert('Fehler: ' + err.message);
+          if (err.code === 'auth/email-already-in-use') {
+            alert('Der Benutzername ist leider schon vergeben.');
+          } else {
+            alert('Fehler: ' + err.message);
+          }
         });
     });
   </script>
