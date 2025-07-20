@@ -1,4 +1,4 @@
-// 1) Firebase‑SDK importieren
+// 1) Firebase-SDK importieren (Auth + Firestore)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getAuth,
@@ -30,30 +30,30 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db   = getFirestore(app);
+const db = getFirestore(app);  // Firestore-Instanz
 
-// 3) Helper: aus Benutzername eine (künstliche) E‑Mail machen
+// 3) Helper: aus Benutzername eine (künstliche) E-Mail machen
 function emailFromUsername(username) {
   return `${username}@lauriver.app`;
 }
 
-// 4) Nutzungsdaten protokollieren
-async function logUsage(eventType) {
+// 4) Firestore: Nutzungsdaten speichern
+async function logUsage(eventType, details = {}) {
   const user = auth.currentUser;
+  if (!user) return;
   try {
-    await addDoc(collection(db, "usageLogs"), {
-      uid:    user ? user.uid : null,
-      email:  user ? user.email : null,
-      event:  eventType,
-      ts:     serverTimestamp()
+    await addDoc(collection(db, "usage_logs"), {
+      uid: user.uid,
+      event: eventType,
+      details,
+      timestamp: serverTimestamp()
     });
-    // console.log("Logged:", eventType);
-  } catch (e) {
-    console.error("Fehler beim Speichern der Nutzungsdaten:", e);
+  } catch (err) {
+    console.error("Fehler beim Speichern der Nutzungsdaten:", err);
   }
 }
 
-// 5) Alle View‑Abschnitte & Buttons holen
+// 5) Alle View-Abschnitte & Buttons holen
 const sections = {
   login:      document.getElementById("login-section"),
   register:   document.getElementById("register-section"),
@@ -65,27 +65,27 @@ const sections = {
 const header      = document.getElementById("main-header");
 const logoutBtn   = document.getElementById("logout-btn");
 
-// 6) View‑Wechsel
+// 6) View-Wechsel
 function showView(name) {
   Object.values(sections).forEach(s => s.classList.add("hidden"));
   sections[name].classList.remove("hidden");
-  logUsage(`navigate_${name}`); // Nutzungs-Event protokollieren
+  // Nutzungsdaten: Seitenwechsel
+  logUsage("view_change", { view: name });
 }
 
-// 7) Auth‑Status überwachen
+// 7) Auth-Status überwachen
 onAuthStateChanged(auth, user => {
   if (user) {
     header.classList.remove("hidden");
     showView("home");
-    logUsage("login");
+    logUsage("auto_login");  // wenn z.B. Persistenz greift
   } else {
     header.classList.add("hidden");
     showView("login");
-    logUsage("logout");
   }
 });
 
-// 8) Login‑Form
+// 8) Login-Form
 document.getElementById("login-form").addEventListener("submit", e => {
   e.preventDefault();
   const u = document.getElementById("login-username").value.trim();
@@ -95,13 +95,13 @@ document.getElementById("login-form").addEventListener("submit", e => {
 
   setPersistence(auth, persistence)
     .then(() => signInWithEmailAndPassword(auth, emailFromUsername(u), p))
-    .catch(err => {
-      alert("Fehler beim Einloggen: " + err.message);
-      logUsage("login_error");
-    });
+    .then(() => {
+      logUsage("login", { method: "password", remember });
+    })
+    .catch(err => alert("Fehler beim Einloggen: " + err.message));
 });
 
-// 9) Registrieren‑Form
+// 9) Registrieren-Form
 document.getElementById("register-form").addEventListener("submit", e => {
   e.preventDefault();
   const u  = document.getElementById("register-username").value.trim();
@@ -109,19 +109,17 @@ document.getElementById("register-form").addEventListener("submit", e => {
   const p2 = document.getElementById("register-password-confirm").value;
   if (p1 !== p2) {
     alert("Die Passwörter stimmen nicht überein.");
-    logUsage("register_password_mismatch");
     return;
   }
 
   createUserWithEmailAndPassword(auth, emailFromUsername(u), p1)
     .then(userCred =>
       updateProfile(userCred.user, { displayName: u })
+        .then(() => {
+          logUsage("register", { username: u });
+        })
     )
-    .then(() => logUsage("register_success"))
-    .catch(err => {
-      alert("Fehler bei der Registrierung: " + err.message);
-      logUsage("register_error");
-    });
+    .catch(err => alert("Fehler bei der Registrierung: " + err.message));
 });
 
 // 10) Links zwischen Login/Registrierung
@@ -134,10 +132,11 @@ document.getElementById("to-login").addEventListener("click", e => {
   showView("login");
 });
 
-// 11) Logout‑Button
+// 11) Logout-Button
 logoutBtn.addEventListener("click", () => {
-  signOut(auth)
-    .catch(err => console.error("Logout-Error:", err));
+  logUsage("logout").then(() => {
+    signOut(auth);
+  });
 });
 
 // 12) Navigation Startseite → Platzhalter
@@ -145,7 +144,7 @@ document.getElementById("nav-calendar").addEventListener("click", () => showView
 document.getElementById("nav-packlist").addEventListener("click", () => showView("packlist"));
 document.getElementById("nav-timeline").addEventListener("click", () => showView("timeline"));
 
-// 13) Zurück‑Buttons in den Untermenüs
+// 13) Zurück-Buttons in den Untermenüs
 document.querySelectorAll(".back-btn").forEach(btn =>
   btn.addEventListener("click", () => showView("home"))
 );
