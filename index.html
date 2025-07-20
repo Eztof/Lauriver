@@ -11,7 +11,6 @@
   <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script>
-    // Deine Firebase-Konfiguration
     const firebaseConfig = {
       apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
       authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -25,39 +24,32 @@
     const db   = firebase.firestore();
   </script>
   <style>
-    body { font-family: Arial, sans-serif; display:flex; flex-direction:column; align-items:center; margin:0; padding:1rem; background:#eef2f5; height:100vh; }
-    header { width:100%; display:flex; justify-content:flex-end; }
-    button { padding:8px 12px; cursor:pointer; }
-    main { text-align:center; flex:1; display:flex; flex-direction:column; justify-content:center; }
-    #count { font-size:2rem; margin-top:1rem; }
-    #settings { margin-top:20px; }
+    body { font-family: Arial, sans-serif; margin:0; padding:1rem; background:#eef2f5; display:flex; flex-direction:column; height:100vh; }
+    header { display:flex; justify-content:flex-end; }
+    header button { margin-left:8px; padding:8px 12px; cursor:pointer; }
+    main { flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; }
+    #count { font-size:2rem; margin:1rem 0; }
+    .nav-buttons { margin-top:20px; }
+    .nav-buttons button {
+      margin:0 8px;
+      padding:10px 16px;
+      font-size:1rem;
+      cursor:pointer;
+    }
+    #settings { margin-top:40px; padding:20px; background:#fff; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,0.1); }
   </style>
 </head>
 <body>
   <script>
-    // Auth‑Schutz
     auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = 'login.html';
-      } else {
-        loadUserData(user.uid);
-      }
-    });
-
-    function loadUserData(uid) {
-      const userRef = db.collection('users').doc(uid);
-      userRef.get().then(doc => {
-        if (!doc.exists) return;
-        const data = doc.data();
-        // Beispiel: Dark Mode Setting anzeigen
-        const darkCheckbox = document.getElementById('dark-mode');
-        if (data.settings.darkMode) {
-          document.body.style.background = '#333';
-          document.body.style.color = '#eee';
-          darkCheckbox.checked = true;
-        }
+      if (!user) return window.location.href = 'login.html';
+      // schon eingeloggter User: alles anzeigen
+      // hier ggf. weitere Daten laden…
+      // visits steigern:
+      db.collection('users').doc(user.uid).update({
+        visits: firebase.firestore.FieldValue.increment(1)
       });
-    }
+    });
   </script>
 
   <header>
@@ -68,7 +60,13 @@
     <h1>Seit dem 25. Januar 2025 sind vergangen:</h1>
     <div id="count">Lade…</div>
 
+    <div class="nav-buttons">
+      <button id="to-settings">Einstellungen</button>
+      <button id="to-packliste">Packliste</button>
+    </div>
+
     <div id="settings">
+      <h2>Einstellungen</h2>
       <label>
         <input type="checkbox" id="dark-mode">
         Dark Mode aktivieren
@@ -85,8 +83,8 @@
     // Countdown
     const startDate = new Date('2025-01-25T00:00:00Z');
     function updateCounter() {
-      const now  = new Date();
-      let diff    = now - startDate;
+      const now = new Date();
+      let diff = now - startDate;
       if (diff < 0) diff = 0;
       const secs = Math.floor(diff/1000)%60;
       const mins = Math.floor(diff/60000)%60;
@@ -98,29 +96,35 @@
     setInterval(updateCounter, 1000);
     updateCounter();
 
-    // Dark Mode Setting speichern
-    document.getElementById('dark-mode').addEventListener('change', e => {
-      const enabled = e.target.checked;
-      const uid = auth.currentUser.uid;
-      db.collection('users').doc(uid).update({
-        'settings.darkMode': enabled
-      }).then(() => {
-        if (enabled) {
+    // Dark Mode laden und speichern
+    auth.onAuthStateChanged(user => {
+      if (!user) return;
+      const ref = db.collection('users').doc(user.uid);
+      ref.get().then(doc => {
+        if (doc.exists && doc.data().settings.darkMode) {
           document.body.style.background = '#333';
           document.body.style.color = '#eee';
-        } else {
-          document.body.style.background = '#eef2f5';
-          document.body.style.color = '#000';
+          document.getElementById('dark-mode').checked = true;
         }
       });
     });
-
-    // Visits pro Seitenaufruf inkrementieren
-    auth.onAuthStateChanged(user => {
-      if (!user) return;
-      db.collection('users').doc(user.uid).update({
-        visits: firebase.firestore.FieldValue.increment(1)
+    document.getElementById('dark-mode').addEventListener('change', e => {
+      const on = e.target.checked;
+      const uid = auth.currentUser.uid;
+      db.collection('users').doc(uid).update({
+        'settings.darkMode': on
+      }).then(() => {
+        document.body.style.background = on ? '#333' : '#eef2f5';
+        document.body.style.color = on ? '#eee' : '#000';
       });
+    });
+
+    // Navigation-Buttons
+    document.getElementById('to-settings').addEventListener('click', () => {
+      document.getElementById('settings').scrollIntoView({ behavior: 'smooth' });
+    });
+    document.getElementById('to-packliste').addEventListener('click', () => {
+      window.location.href = 'packliste.html';
     });
   </script>
 </body>

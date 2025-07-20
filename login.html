@@ -11,7 +11,6 @@
   <!-- Firebase Firestore -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
   <script>
-    // Deine Firebase-Konfiguration
     const firebaseConfig = {
       apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
       authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -31,6 +30,7 @@
     button { cursor:pointer; }
     a { color:#0066cc; text-decoration:none; }
     h1 { margin-bottom:10px; text-align:center; }
+    p { text-align:center; font-size:0.9rem; margin-top:12px; }
   </style>
 </head>
 <body>
@@ -40,7 +40,7 @@
     <input type="password" id="login-pass" placeholder="Passwort" required>
     <label><input type="checkbox" id="remember" checked> Gerät merken</label>
     <button type="submit">Login</button>
-    <p style="text-align:center; font-size:0.9rem;">Noch keinen Account? <a href="register.html">Registrieren</a></p>
+    <p><a href="register.html">Registrieren</a></p>
   </form>
 
   <script>
@@ -61,7 +61,6 @@
         .then(cred => {
           const uid     = cred.user.uid;
           const userRef = db.collection('users').doc(uid);
-          // Transaction: visits++ und lastLogin aktualisieren
           return db.runTransaction(tx =>
             tx.get(userRef).then(doc => {
               if (!doc.exists) throw new Error('User-Dokument fehlt!');
@@ -73,9 +72,7 @@
             })
           );
         })
-        .then(() => {
-          window.location.href = 'index.html';
-        })
+        .then(() => window.location.href = 'index.html')
         .catch(err => {
           if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
             alert('Benutzername oder Passwort ist falsch.');
