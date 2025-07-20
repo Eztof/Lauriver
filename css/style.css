@@ -1,4 +1,4 @@
-/* Basis-Reset & Mobile-Optimierung */
+/* Reset & Mobile */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
@@ -6,6 +6,8 @@ body {
   background: #f5f5f5;
   color: #333;
 }
+
+/* Header */
 header {
   display: flex;
   justify-content: space-between;
@@ -29,11 +31,9 @@ header #logout-btn {
 .view:not(.hidden) { display: block; }
 .hidden { display: none; }
 
-main {
-  padding: 1rem;
-}
+main { padding: 1rem; }
 
-/* Formulare & Buttons */
+/* Forms & Buttons */
 form {
   display: flex;
   flex-direction: column;
@@ -63,7 +63,7 @@ button.back-btn {
   text-align: left;
 }
 
-/* Navigation auf der Startseite */
+/* Navigation auf Startseite */
 nav {
   display: flex;
   flex-direction: column;
@@ -71,4 +71,31 @@ nav {
 }
 nav button {
   width: 100%;
+}
+
+/* Packliste */
+#packlist-items {
+  list-style: none;
+  margin-top: 1rem;
+}
+#packlist-items li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #ddd;
+}
+.packlist-text {
+  flex: 1;
+  outline: none;
+}
+.packlist-text.completed {
+  text-decoration: line-through;
+  color: #888;
+}
+#packlist-items button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
 }

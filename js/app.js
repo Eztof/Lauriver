@@ -1,4 +1,4 @@
-// 1) Firebase‑SDK importieren (Auth + Firestore)
+// 1) Firebase‑SDK importieren
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getAuth,
@@ -16,15 +16,16 @@ import {
   doc,
   setDoc,
   updateDoc,
-  serverTimestamp,
+  deleteDoc,
   collection,
   addDoc,
   query,
   orderBy,
-  onSnapshot
+  onSnapshot,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 2) Deine Firebase‑Konfiguration
+// 2) Firebase‑Konfiguration
 const firebaseConfig = {
   apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
   authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -34,11 +35,11 @@ const firebaseConfig = {
   messagingSenderId: "508140835438",
   appId: "1:508140835438:web:4326ed6b40c01037e64c7f"
 };
-const app = initializeApp(firebaseConfig);
+const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-// 3) Hilfs‑Funktionen
+// 3) Helpers
 function emailFromUsername(username) {
   return `${username}@lauriver.app`;
 }
@@ -49,7 +50,7 @@ async function updateUsage(updates) {
   await setDoc(ref, { ...updates, lastUpdate: serverTimestamp() }, { merge: true });
 }
 
-// 4) UI‑Elemente referenzieren
+// 4) UI‑Refs
 const sections = {
   login:      document.getElementById("login-section"),
   register:   document.getElementById("register-section"),
@@ -58,13 +59,12 @@ const sections = {
   packlist:   document.getElementById("packlist-section"),
   timeline:   document.getElementById("timeline-section")
 };
-const header        = document.getElementById("main-header");
-const logoutBtn     = document.getElementById("logout-btn");
-const packForm      = document.getElementById("packlist-form");
-const packInput     = document.getElementById("packlist-input");
-const packListUl    = document.getElementById("packlist-items");
+const logoutBtn  = document.getElementById("logout-btn");
+const packForm   = document.getElementById("packlist-form");
+const packInput  = document.getElementById("packlist-input");
+const packListUl = document.getElementById("packlist-items");
 
-// 5) View‑Wechsel
+// 5) View‑Switch
 function showView(name) {
   Object.values(sections).forEach(s => s.classList.add("hidden"));
   sections[name].classList.remove("hidden");
@@ -72,19 +72,59 @@ function showView(name) {
 }
 
 // 6) Auth‑Listener
+let packUnsub = null;
 onAuthStateChanged(auth, user => {
   if (user) {
-    header.classList.remove("hidden");
     showView("home");
     updateUsage({ lastLogin: serverTimestamp(), displayName: user.displayName });
-    initPacklistListener();
+    // Packliste‑Listener starten
+    if (packUnsub) packUnsub();
+    const colRef = collection(db, "packlist_items");
+    const q = query(colRef, orderBy("createdAt"));
+    packUnsub = onSnapshot(q, snap => {
+      packListUl.innerHTML = "";
+      snap.forEach(docSnap => {
+        const data = docSnap.data();
+        const li = document.createElement("li");
+        // Checkbox
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = data.done;
+        cb.addEventListener("change", () =>
+          updateDoc(doc(db, "packlist_items", docSnap.id), { done: cb.checked, updatedAt: serverTimestamp() })
+        );
+        // Text
+        const span = document.createElement("span");
+        span.textContent = data.text;
+        span.contentEditable = true;
+        span.classList.add("packlist-text");
+        if (data.done) span.classList.add("completed");
+        span.addEventListener("blur", () => {
+          const txt = span.textContent.trim();
+          if (txt && txt !== data.text) {
+            updateDoc(doc(db, "packlist_items", docSnap.id), { text: txt, updatedAt: serverTimestamp() });
+          } else {
+            span.textContent = data.text;
+          }
+        });
+        // Delete
+        const del = document.createElement("button");
+        del.textContent = "🗑";
+        del.addEventListener("click", () =>
+          deleteDoc(doc(db, "packlist_items", docSnap.id))
+        );
+        // Zusammenbauen
+        li.append(cb, span, del);
+        packListUl.append(li);
+      });
+    });
   } else {
-    header.classList.add("hidden");
+    if (packUnsub) packUnsub();
     showView("login");
   }
 });
 
-// 7) Login‑Form
+// 7) Login
 document.getElementById("login-form").addEventListener("submit", e => {
   e.preventDefault();
   const u = document.getElementById("login-username").value.trim();
@@ -96,13 +136,13 @@ document.getElementById("login-form").addEventListener("submit", e => {
     .catch(err => alert("Fehler beim Einloggen: " + err.message));
 });
 
-// 8) Registrieren‑Form
+// 8) Registration
 document.getElementById("register-form").addEventListener("submit", e => {
   e.preventDefault();
   const u  = document.getElementById("register-username").value.trim();
   const p1 = document.getElementById("register-password").value;
   const p2 = document.getElementById("register-password-confirm").value;
-  if (p1 !== p2) return alert("Die Passwörter stimmen nicht überein.");
+  if (p1 !== p2) return alert("Passwörter stimmen nicht überein.");
   createUserWithEmailAndPassword(auth, emailFromUsername(u), p1)
     .then(async cred => {
       await updateProfile(cred.user, { displayName: u });
@@ -115,9 +155,9 @@ document.getElementById("register-form").addEventListener("submit", e => {
     .catch(err => alert("Fehler bei der Registrierung: " + err.message));
 });
 
-// 9) Links Login ↔ Registrierung
+// 9) Switch Links
 document.getElementById("to-register").addEventListener("click", e => { e.preventDefault(); showView("register"); });
-document.getElementById("to-login")   .addEventListener("click", e => { e.preventDefault(); showView("login"); });
+document.getElementById("to-login").addEventListener("click", e => { e.preventDefault(); showView("login"); });
 
 // 10) Logout
 logoutBtn.addEventListener("click", async () => {
@@ -125,7 +165,7 @@ logoutBtn.addEventListener("click", async () => {
   signOut(auth);
 });
 
-// 11) Navigation Start → Untermenüs
+// 11) Navigation Startseite
 document.getElementById("nav-calendar").addEventListener("click", () => showView("calendar"));
 document.getElementById("nav-packlist").addEventListener("click", () => showView("packlist"));
 document.getElementById("nav-timeline").addEventListener("click", () => showView("timeline"));
@@ -133,55 +173,7 @@ document.querySelectorAll(".back-btn").forEach(btn =>
   btn.addEventListener("click", () => showView("home"))
 );
 
-// 12) **Packliste: Real‑Time‑Listener einrichten**
-let packUnsub;
-function initPacklistListener() {
-  // Alte Listener abmelden
-  if (packUnsub) packUnsub();
-  const colRef = collection(db, "packlist_items");
-  const q = query(colRef, orderBy("createdAt"));
-  packUnsub = onSnapshot(q, snap => {
-    packListUl.innerHTML = "";
-    snap.forEach(docSnap => {
-      const data = docSnap.data();
-      const li = document.createElement("li");
-      li.dataset.id = docSnap.id;
-      // Checkbox
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.checked = data.done;
-      cb.addEventListener("change", () => {
-        updateDoc(doc(db, "packlist_items", docSnap.id), { done: cb.checked, updatedAt: serverTimestamp() });
-      });
-      // Text (editierbar)
-      const span = document.createElement("span");
-      span.textContent = data.text;
-      span.contentEditable = true;
-      span.classList.add("packlist-text");
-      if (data.done) span.classList.add("completed");
-      span.addEventListener("blur", () => {
-        const newText = span.textContent.trim();
-        if (newText && newText !== data.text) {
-          updateDoc(doc(db, "packlist_items", docSnap.id), { text: newText, updatedAt: serverTimestamp() });
-        } else {
-          span.textContent = data.text;
-        }
-      });
-      // Löschen‑Button
-      const del = document.createElement("button");
-      del.textContent = "🗑";
-      del.addEventListener("click", () => {
-        // statt löschen könntest du auch ein 'deleted' flag setzen
-        deleteDoc(doc(db, "packlist_items", docSnap.id));
-      });
-      // Zusammenbauen
-      li.append(cb, span, del);
-      packListUl.append(li);
-    });
-  });
-}
-
-// 13) Neues Item anlegen
+// 12) Neues Packlist‑Item anlegen
 packForm.addEventListener("submit", e => {
   e.preventDefault();
   const text = packInput.value.trim();

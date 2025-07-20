@@ -13,9 +13,31 @@
     <button id="logout-btn">Logout</button>
   </header>
   <main>
-    <!-- (Login- und Register‑Sektionen bleiben unverändert) -->
+    <!-- LOGIN -->
+    <section id="login-section" class="view">
+      <h2>Einloggen</h2>
+      <form id="login-form">
+        <input type="text" id="login-username" placeholder="Benutzername" required>
+        <input type="password" id="login-password" placeholder="Passwort" required>
+        <label><input type="checkbox" id="remember-device"> Gerät merken</label>
+        <button type="submit">Einloggen</button>
+      </form>
+      <p>Noch keinen Account? <a href="#" id="to-register">Registrieren</a></p>
+    </section>
 
-    <!-- Startseite nach Login -->
+    <!-- REGISTRIEREN -->
+    <section id="register-section" class="view hidden">
+      <h2>Registrieren</h2>
+      <form id="register-form">
+        <input type="text" id="register-username" placeholder="Benutzername" required>
+        <input type="password" id="register-password" placeholder="Passwort" required>
+        <input type="password" id="register-password-confirm" placeholder="Passwort bestätigen" required>
+        <button type="submit">Registrieren</button>
+      </form>
+      <p>Bereits registriert? <a href="#" id="to-login">Einloggen</a></p>
+    </section>
+
+    <!-- STARTSEITE -->
     <section id="home-section" class="view hidden">
       <h2>Startseite</h2>
       <nav>
@@ -25,29 +47,25 @@
       </nav>
     </section>
 
-    <!-- Platzhalter: Kalender -->
+    <!-- KALENDER -->
     <section id="calendar-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Kalender</h2>
       <p>Hier kommt später dein Kalender.</p>
     </section>
 
-    <!-- **Ersetze hier die einfache Platzierung durch das neue Packlisten‑UI** -->
+    <!-- PACKLISTE -->
     <section id="packlist-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Packliste</h2>
-
-      <!-- Neues Item hinzufügen -->
       <form id="packlist-form">
         <input type="text" id="packlist-input" placeholder="Item hinzufügen" required>
         <button type="submit">Hinzufügen</button>
       </form>
-
-      <!-- Die Liste der Items -->
       <ul id="packlist-items"></ul>
     </section>
 
-    <!-- Platzhalter: Zeitstrang -->
+    <!-- ZEITSTRANG -->
     <section id="timeline-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Zeitstrang</h2>
