@@ -1,109 +1,97 @@
-/* --- Grundfarben --- */
 :root {
-  --bg-dark: #001f3f;
-  --bg-mid: #002d66;
-  --bg-light: #ffffff;
+  --bg: #001f3f;
+  --panel: #002d66;
+  --card: #ffffff;
   --text-light: #ffffff;
   --text-dark: #001f3f;
   --accent: #007bff;
+  --secondary: #0056b3;
   --danger: #e74c3c;
 }
 
-/* --- Basis --- */
+* { margin:0; padding:0; box-sizing:border-box; }
 body {
-  background: var(--bg-dark);
+  font-family: Arial, sans-serif;
+  background: var(--bg);
   color: var(--text-light);
+  min-height:100vh;
 }
 .container {
-  max-width: 480px;
-  margin: 1rem auto;
-  padding: 0;
+  max-width:480px;
+  margin:2rem auto;
+  padding:0 1rem;
 }
 
-/* --- Header --- */
+.auth-section {
+  background: var(--panel);
+  padding:2rem 1rem;
+  border-radius:8px;
+  text-align:center;
+}
+.auth-section.hidden { display:none; }
+.auth-section h1 { margin-bottom:1.5rem; }
+.auth-form {
+  display:flex; flex-direction:column; gap:0.75rem;
+}
+.auth-form label { text-align:left; font-size:0.9rem; }
+.auth-form input[type="text"],
+.auth-form input[type="password"] {
+  padding:0.5rem; border:none; border-radius:4px;
+}
+.checkbox {
+  display:flex; align-items:center; gap:0.5rem;
+  font-size:0.9rem; justify-content:flex-start;
+}
+.switch {
+  margin-top:1rem; font-size:0.9rem;
+}
+.switch a { color: var(--accent); text-decoration:none; }
+.switch a:hover { text-decoration:underline; }
+
+.btn {
+  border:none; border-radius:4px; padding:0.6rem; font-size:1rem;
+  cursor:pointer;
+}
+.btn.primary { background: var(--accent); color:#fff; }
+.btn.secondary { background: var(--secondary); color:#fff; }
+.btn.danger { background: var(--danger); color:#fff; }
+.block { display:block; width:100%; margin-top:1rem; }
+.centered { text-align:center; }
+
 .header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: var(--bg-mid);
-  padding: 0.75rem 1rem;
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
+  display:flex; justify-content:space-between; align-items:center;
+  background: var(--panel); padding:0.75rem 1rem; border-radius:8px 8px 0 0;
 }
-.header h1 {
-  font-size: 1.25rem;
-  margin: 0;
+.content {
+  background: var(--panel); padding:1.5rem 1rem; border-radius:0 0 8px 8px;
+  display:flex; flex-direction:column; gap:1rem;
 }
 
-/* --- Listen als Karten --- */
+.card {
+  background: var(--card); color: var(--text-dark);
+  border-radius:6px; padding:1rem;
+  box-shadow:0 1px 3px rgba(0,0,0,0.2);
+}
+
+#counter { font-size:1.25rem; }
+
+.hidden { display:none; }
+
+/* LISTEN-SEITEN STYLES */
 .card-list {
-  list-style: none;
-  margin: 0;
-  padding: 0.5rem;
-  background: var(--bg-mid);
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
+  list-style:none; padding:1rem; background: var(--panel);
+  border-radius:0 0 8px 8px; margin-top:-0.5rem;
 }
 .card-list li {
-  background: var(--bg-light);
-  color: var(--text-dark);
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  cursor: pointer;
+  background: var(--card); color: var(--text-dark);
+  padding:0.75rem 1rem; margin-bottom:0.5rem;
+  border-radius:6px; display:flex; justify-content:space-between;
+  align-items:center; box-shadow:0 1px 2px rgba(0,0,0,0.1);
 }
-.card-list li.done {
-  text-decoration: line-through;
-  opacity: 0.6;
+.card-list li.done { text-decoration:line-through; opacity:0.6; }
+.actions { display:flex; gap:0.5rem; }
+.actions button {
+  background:transparent; border:none; cursor:pointer; font-size:0.9rem;
+  color: var(--accent);
 }
-
-/* --- Buttons --- */
-.btn {
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.9rem;
-  cursor: pointer;
-}
-.btn.primary {
-  background: var(--accent);
-  color: var(--text-light);
-}
-.btn.danger {
-  background: var(--danger);
-  color: var(--text-light);
-}
-.btn.block {
-  display: block;
-  width: calc(100% - 2rem);
-  margin: 1rem auto;
-}
-.icon-btn {
-  background: transparent;
-  color: var(--text-light);
-  font-size: 1.25rem;
-  padding: 0.25rem 0.5rem;
-}
-
-/* --- Kleine Aktions-Buttons in Karten --- */
-.card-list li .actions {
-  display: flex;
-  gap: 0.5rem;
-}
-.card-list li .actions button {
-  background: transparent;
-  color: var(--text-dark);
-  font-size: 1rem;
-  padding: 0;
-}
-
-/* --- Responsivität --- */
-@media (max-width: 480px) {
-  .header h1 {
-    font-size: 1rem;
-  }
-}
+.actions button.delete { color: var(--danger); }

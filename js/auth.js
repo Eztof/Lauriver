@@ -1,4 +1,3 @@
-// js/auth.js
 import { auth, firestore } from "./firebase-config.js";
 import {
   setPersistence,
@@ -10,142 +9,80 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import {
-  doc,
-  getDoc,
-  setDoc,
-  updateDoc,
-  collection,
-  addDoc,
-  serverTimestamp
+  doc, getDoc, setDoc, updateDoc,
+  collection, addDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-// Elemente
-const regSection   = document.getElementById('register-section');
-const loginSection = document.getElementById('login-section');
-const dashSection  = document.getElementById('dashboard');
-const formRegister = document.getElementById('form-register');
+const loginSec    = document.getElementById('login-section');
+const registerSec = document.getElementById('register-section');
+const dashSec     = document.getElementById('dashboard');
+
 const formLogin    = document.getElementById('form-login');
-const btnLogout    = document.getElementById('btn-logout');
+const formRegister = document.getElementById('form-register');
+const remLogin     = document.getElementById('login-remember');
+const remRegister  = document.getElementById('reg-remember');
 
-// Checkbox-Elemente
-const remReg   = document.getElementById('reg-remember');
-const remLogin = document.getElementById('login-remember');
-
-// Hilfsfunktionen
-async function logUsage(uid, eventName, details = {}) {
-  try {
-    const usageCol = collection(firestore, "users", uid, "usage");
-    await addDoc(usageCol, {
-      event: eventName,
-      details,
-      timestamp: serverTimestamp()
-    });
-  } catch (err) {
-    console.error("Usage logging failed:", err);
-  }
-}
-
-function applyPersistence(remember) {
-  const mode = remember
-    ? browserLocalPersistence
-    : browserSessionPersistence;
-  return setPersistence(auth, mode);
-}
-
-async function setupUserData(uid, username) {
-  const now = Date.now();
-  const userDoc = doc(firestore, "users", uid);
-  const snap    = await getDoc(userDoc);
-
-  if (!snap.exists()) {
-    await setDoc(userDoc, {
-      username,
-      createdAt: now,
-      lastLogin: now,
-      settings: {}
-    });
-    await logUsage(uid, "registration");
-  } else {
-    await updateDoc(userDoc, { lastLogin: now });
-  }
-}
-
-// Form-Switch
 document.getElementById('show-register').addEventListener('click', e => {
   e.preventDefault();
-  loginSection.classList.add('hidden');
-  regSection.classList.remove('hidden');
+  loginSec.classList.add('hidden');
+  registerSec.classList.remove('hidden');
 });
 document.getElementById('show-login').addEventListener('click', e => {
   e.preventDefault();
-  regSection.classList.add('hidden');
-  loginSection.classList.remove('hidden');
+  registerSec.classList.add('hidden');
+  loginSec.classList.remove('hidden');
 });
 
-// Registrierung
+function applyPersistence(remember) {
+  return setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+}
+
+async function setupUser(uid, username) {
+  const ref = doc(firestore, 'users', uid);
+  const snap = await getDoc(ref);
+  const now = Date.now();
+  if (!snap.exists()) {
+    await setDoc(ref, { username, createdAt: now });
+  } else {
+    await updateDoc(ref, { lastLogin: now });
+  }
+}
+
 formRegister.addEventListener('submit', async e => {
   e.preventDefault();
-  const username = formRegister['username'].value.trim();
-  const password = formRegister['password'].value;
-  if (!username || !password) {
-    return alert('Bitte Benutzername und Passwort eingeben.');
-  }
-
+  const u = formRegister.username.value.trim();
+  const p = formRegister.password.value;
+  if (!u||!p) return alert('Bitte ausfüllen');
   try {
-    await applyPersistence(remReg.checked);
-    const cred = await createUserWithEmailAndPassword(
-      auth,
-      `${username}@lauriver.local`,
-      password
-    );
-    await setupUserData(cred.user.uid, username);
-  } catch (err) {
-    alert(err.message);
-  }
+    await applyPersistence(remRegister.checked);
+    const cred = await createUserWithEmailAndPassword(auth, `${u}@lauriver.local`, p);
+    await setupUser(cred.user.uid, u);
+  } catch (err) { alert(err.message); }
 });
 
-// Login
 formLogin.addEventListener('submit', async e => {
   e.preventDefault();
-  const username = formLogin['username'].value.trim();
-  const password = formLogin['password'].value;
-  if (!username || !password) {
-    return alert('Bitte Benutzername und Passwort eingeben.');
-  }
-
+  const u = formLogin.username.value.trim();
+  const p = formLogin.password.value;
+  if (!u||!p) return alert('Bitte ausfüllen');
   try {
     await applyPersistence(remLogin.checked);
-    const cred = await signInWithEmailAndPassword(
-      auth,
-      `${username}@lauriver.local`,
-      password
-    );
-    await logUsage(cred.user.uid, "login");
-  } catch (err) {
-    alert(err.message);
-  }
+    await signInWithEmailAndPassword(auth, `${u}@lauriver.local`, p);
+  } catch (err) { alert(err.message); }
 });
 
-// Auth-State Listener
 onAuthStateChanged(auth, user => {
   if (user) {
-    loginSection.classList.add('hidden');
-    regSection.classList.add('hidden');
-    dashSection.classList.remove('hidden');
-    // startCounter ist global definiert in countdown.js
-    if (typeof startCounter === 'function') {
-      startCounter();
-    }
+    loginSec.classList.add('hidden');
+    registerSec.classList.add('hidden');
+    dashSec.classList.remove('hidden');
+    startCounter();
   } else {
-    dashSection.classList.add('hidden');
-    loginSection.classList.remove('hidden');
+    dashSec.classList.add('hidden');
+    loginSec.classList.remove('hidden');
   }
 });
 
-// Logout
-btnLogout.addEventListener('click', async () => {
-  const user = auth.currentUser;
-  if (!user) return;
-  await logUsage(user.uid, "logout");
-  await signOut(auth);
+document.getElementById('btn-logout').addEventListener('click', () => {
+  signOut(auth);
 });

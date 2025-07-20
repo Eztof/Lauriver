@@ -2,79 +2,60 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>Lauriver</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Lauriver</h1>
-    </header>
-
-    <!-- Registration Form -->
-    <section id="register-section" class="auth-section hidden">
-      <h2>Registrieren</h2>
-      <form id="form-register">
-        <input
-          id="reg-username"
-          name="username"
-          type="text"
-          placeholder="Benutzername"
-          autocomplete="username"
-          required
-        />
-        <input
-          id="reg-password"
-          name="password"
-          type="password"
-          placeholder="Passwort"
-          autocomplete="new-password"
-          required
-        />
-        <label>
-          <input id="reg-remember" type="checkbox" />
-          Gerät merken
-        </label>
-        <button id="btn-register" type="submit">Registrieren</button>
-      </form>
-      <p>Oder <a href="#" id="show-login">einloggen</a></p>
-    </section>
-
-    <!-- Login Form -->
+    <!-- LOGIN -->
     <section id="login-section" class="auth-section">
-      <h2>Login</h2>
-      <form id="form-login">
-        <input
-          id="login-username"
-          name="username"
-          type="text"
-          placeholder="Benutzername"
-          autocomplete="username"
-          required
-        />
-        <input
-          id="login-password"
-          name="password"
-          type="password"
-          placeholder="Passwort"
-          autocomplete="current-password"
-          required
-        />
-        <label>
-          <input id="login-remember" type="checkbox" />
-          Gerät merken
+      <h1>Lauriver</h1>
+      <form id="form-login" class="auth-form">
+        <label for="login-username">Benutzername</label>
+        <input id="login-username" name="username" type="text" autocomplete="username" required/>
+        <label for="login-password">Passwort</label>
+        <input id="login-password" name="password" type="password" autocomplete="current-password" required/>
+        <label class="checkbox">
+          <input id="login-remember" type="checkbox"/>
+          <span>Gerät merken</span>
         </label>
-        <button id="btn-login" type="submit">Einloggen</button>
+        <button type="submit" class="btn primary">Einloggen</button>
       </form>
-      <p>Oder <a href="#" id="show-register">registrieren</a></p>
+      <p class="switch">
+        Noch keinen Account? <a href="#" id="show-register">Registrieren</a>
+      </p>
     </section>
 
-    <!-- Dashboard -->
+    <!-- REGISTER -->
+    <section id="register-section" class="auth-section hidden">
+      <h1>Lauriver</h1>
+      <form id="form-register" class="auth-form">
+        <label for="reg-username">Benutzername</label>
+        <input id="reg-username" name="username" type="text" autocomplete="username" required/>
+        <label for="reg-password">Passwort</label>
+        <input id="reg-password" name="password" type="password" autocomplete="new-password" required/>
+        <label class="checkbox">
+          <input id="reg-remember" type="checkbox"/>
+          <span>Gerät merken</span>
+        </label>
+        <button type="submit" class="btn primary">Registrieren</button>
+      </form>
+      <p class="switch">
+        Bereits registriert? <a href="#" id="show-login">Einloggen</a>
+      </p>
+    </section>
+
+    <!-- DASHBOARD -->
     <section id="dashboard" class="hidden">
-      <div id="counter"></div>
-      <button id="btn-packlist" class="action">Zur Packliste</button>
-      <button id="btn-logout">Logout</button>
+      <header class="header">
+        <h1>Lauriver</h1>
+        <button id="btn-logout" class="btn secondary">Logout</button>
+      </header>
+      <div class="content">
+        <div id="counter" class="card centered"></div>
+        <button id="btn-packlist" class="btn primary block">Packlisten verwalten</button>
+      </div>
     </section>
   </div>
 

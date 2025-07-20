@@ -1,84 +1,59 @@
-// js/packlist.js
 import { auth, firestore } from "./firebase-config.js";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import {
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-import {
-  collection,
-  doc,
-  addDoc,
-  getDocs,
-  onSnapshot,
-  updateDoc,
-  deleteDoc,
-  query,
-  where,
-  serverTimestamp
+  collection, doc, addDoc, getDocs, onSnapshot,
+  updateDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-// DOM-Elemente
-const overview    = document.getElementById('lists-overview');
-const detail      = document.getElementById('list-detail');
+const overview    = document.getElementById('overview');
+const detail      = document.getElementById('detail');
 const listsEl     = document.getElementById('lists');
 const itemsEl     = document.getElementById('items');
 const btnNewList  = document.getElementById('btn-new-list');
 const btnBack     = document.getElementById('btn-back');
-const btnClose    = document.getElementById('btn-close-detail');
+const btnClose    = document.getElementById('btn-close');
 const btnAddItem  = document.getElementById('btn-add-item');
-const btnDeleteList = document.getElementById('btn-delete-list');
-const listTitleEl = document.getElementById('list-title');
+const btnDelete   = document.getElementById('btn-delete-list');
+const titleEl     = document.getElementById('list-title');
 
-let currentUser, currentListId;
+let currentListId;
 
-// Auth & Initialisierung
+// Auth-Check
 onAuthStateChanged(auth, user => {
-  if (user) {
-    currentUser = user;
-    loadLists();
-  } else {
-    window.location.href = 'index.html';
-  }
+  if (!user) return window.location.href = 'index.html';
+  loadLists();
 });
 
-// Alle Listen des Users laden
+// Listen laden (global)
 function loadLists() {
-  const col = collection(firestore, "users", currentUser.uid, "lists");
+  const col = collection(firestore, 'lists');
   onSnapshot(col, snap => {
     listsEl.innerHTML = '';
     snap.forEach(docSnap => {
-      const data = docSnap.data();
+      const { title } = docSnap.data();
       const li = document.createElement('li');
-      li.textContent = data.title;
-      // Bearbeiten/Navigieren
-      li.addEventListener('click', () => openList(docSnap.id, data.title));
-      // Löschen
-      const del = document.createElement('button');
-      del.textContent = '🗑';
-      del.className = 'small danger';
-      del.addEventListener('click', e => {
-        e.stopPropagation();
-        deleteDoc(doc(col, docSnap.id));
-      });
-      li.appendChild(del);
+      li.textContent = title;
+      li.addEventListener('click', () => openList(docSnap.id, title));
       listsEl.appendChild(li);
     });
   });
 }
 
-// Neue Liste anlegen
+// Neue Liste
 btnNewList.addEventListener('click', async () => {
-  const title = prompt('Titel der neuen Packliste:');
+  const title = prompt('Titel der neuen Liste:');
   if (!title) return;
-  await addDoc(collection(firestore, "users", currentUser.uid, "lists"), {
+  await addDoc(collection(firestore, 'lists'), {
     title,
+    createdBy: auth.currentUser.uid,
     createdAt: serverTimestamp()
   });
 });
 
 // Liste öffnen
-function openList(listId, title) {
-  currentListId = listId;
-  listTitleEl.textContent = title;
+function openList(id, title) {
+  currentListId = id;
+  titleEl.textContent = title;
   overview.classList.add('hidden');
   detail.classList.remove('hidden');
   loadItems();
@@ -86,38 +61,46 @@ function openList(listId, title) {
 
 // Items laden
 function loadItems() {
-  const itemsCol = collection(firestore, "users", currentUser.uid, "lists", currentListId, "items");
-  onSnapshot(itemsCol, snap => {
+  const col = collection(firestore, 'lists', currentListId, 'items');
+  onSnapshot(col, snap => {
     itemsEl.innerHTML = '';
     snap.forEach(docSnap => {
-      const data = docSnap.data();
+      const { text, quantity=1, done } = docSnap.data();
       const li = document.createElement('li');
-      li.textContent = data.text;
-      li.style.textDecoration = data.done ? 'line-through' : 'none';
-      // Abhaken
-      li.addEventListener('click', () => {
-        updateDoc(doc(itemsCol, docSnap.id), { done: !data.done });
+      li.className = done ? 'done' : '';
+      const left = document.createElement('span');
+      left.textContent = `${text} ×${quantity}`;
+      const actions = document.createElement('div');
+      actions.className = 'actions';
+
+      // Check/Uncheck
+      const chk = document.createElement('button');
+      chk.textContent = done ? '☑' : '☐';
+      chk.addEventListener('click', async () => {
+        await updateDoc(doc(col, docSnap.id), { done: !done });
       });
-      // Löschen
+      // Edit
+      const edt = document.createElement('button');
+      edt.textContent = '✎';
+      edt.addEventListener('click', async () => {
+        const newText = prompt('Text ändern:', text);
+        const newQty  = parseInt(prompt('Anzahl:', quantity),10) || quantity;
+        await updateDoc(doc(col, docSnap.id), {
+          text: newText||text,
+          quantity: newQty
+        });
+      });
+      // Delete
       const del = document.createElement('button');
       del.textContent = '🗑';
-      del.className = 'small danger';
-      del.addEventListener('click', e => {
-        e.stopPropagation();
-        deleteDoc(doc(itemsCol, docSnap.id));
+      del.addEventListener('click', async () => {
+        if (confirm('Eintrag löschen?')) {
+          await deleteDoc(doc(col, docSnap.id));
+        }
       });
-      li.appendChild(del);
-      // Bearbeiten
-      const edit = document.createElement('button');
-      edit.textContent = '✏️';
-      edit.className = 'small';
-      edit.addEventListener('click', e => {
-        e.stopPropagation();
-        const newText = prompt('Neuer Text:', data.text);
-        if (newText) updateDoc(doc(itemsCol, docSnap.id), { text: newText });
-      });
-      li.appendChild(edit);
 
+      [chk, edt, del].forEach(b=>actions.appendChild(b));
+      li.append(left, actions);
       itemsEl.appendChild(li);
     });
   });
@@ -125,27 +108,28 @@ function loadItems() {
 
 // Item hinzufügen
 btnAddItem.addEventListener('click', async () => {
-  const text = prompt('Text für neuen Eintrag:');
+  const text = prompt('Neuer Eintrag:');
+  const qty  = parseInt(prompt('Anzahl:'),10) || 1;
   if (!text) return;
-  await addDoc(collection(firestore, "users", currentUser.uid, "lists", currentListId, "items"), {
+  await addDoc(collection(firestore, 'lists', currentListId, 'items'), {
     text,
+    quantity: qty,
     done: false,
+    createdBy: auth.currentUser.uid,
     createdAt: serverTimestamp()
   });
 });
 
 // Liste löschen
-btnDeleteList.addEventListener('click', async () => {
-  if (!confirm('Packliste wirklich löschen?')) return;
-  await deleteDoc(doc(firestore, "users", currentUser.uid, "lists", currentListId));
+btnDelete.addEventListener('click', async () => {
+  if (!confirm('Liste löschen?')) return;
+  await deleteDoc(doc(firestore, 'lists', currentListId));
   detail.classList.add('hidden');
   overview.classList.remove('hidden');
 });
 
-// Zurück-Button
-btnBack.addEventListener('click', () => {
-  window.location.href = 'index.html';
-});
+// Navigation zurück
+btnBack.addEventListener('click', () => window.location.href = 'index.html');
 btnClose.addEventListener('click', () => {
   detail.classList.add('hidden');
   overview.classList.remove('hidden');

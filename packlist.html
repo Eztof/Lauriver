@@ -2,27 +2,26 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Packliste – Lauriver</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Packlisten – Lauriver</title>
   <link rel="stylesheet" href="css/style.css"/>
 </head>
 <body>
   <div class="container">
-    <header class="header">
-      <button id="btn-back" class="btn icon-btn">&larr;</button>
-      <h1>Packlisten</h1>
-      <button id="btn-new-list" class="btn primary">+ Neue Liste</button>
-    </header>
-
-    <!-- Übersichtsseite -->
-    <section id="lists-overview">
+    <!-- Listen-Übersicht -->
+    <section id="overview">
+      <header class="header">
+        <button id="btn-back" class="btn secondary">Zurück</button>
+        <h1>Packlisten</h1>
+        <button id="btn-new-list" class="btn primary">+ Liste</button>
+      </header>
       <ul id="lists" class="card-list"></ul>
     </section>
 
-    <!-- Detailseite -->
-    <section id="list-detail" class="hidden">
+    <!-- Detail einer Liste -->
+    <section id="detail" class="hidden">
       <header class="header">
-        <button id="btn-close-detail" class="btn icon-btn">&larr;</button>
+        <button id="btn-close" class="btn secondary">Zurück</button>
         <h1 id="list-title"></h1>
         <button id="btn-add-item" class="btn primary">+ Eintrag</button>
       </header>
@@ -31,7 +30,6 @@
     </section>
   </div>
 
-  <!-- Firebase & App Scripts -->
   <script type="module" src="js/firebase-config.js"></script>
   <script type="module" src="js/packlist.js"></script>
 </body>
