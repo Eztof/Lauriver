@@ -73,6 +73,7 @@
     <!-- Dashboard -->
     <section id="dashboard" class="hidden">
       <div id="counter"></div>
+      <button id="btn-packlist" class="action">Zur Packliste</button>
       <button id="btn-logout">Logout</button>
     </section>
   </div>
@@ -81,5 +82,10 @@
   <script type="module" src="js/firebase-config.js"></script>
   <script type="module" src="js/auth.js"></script>
   <script src="js/countdown.js"></script>
+  <script>
+    document.getElementById('btn-packlist').addEventListener('click', () => {
+      window.location.href = 'packlist.html';
+    });
+  </script>
 </body>
 </html>
