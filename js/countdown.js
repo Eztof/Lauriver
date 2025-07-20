@@ -5,7 +5,7 @@ function startCounter() {
   clearInterval(intervalId);
   function update() {
     const now = new Date();
-    let diff = now - target; // ms
+    let diff = now - target;
     if (diff < 0) diff = 0;
     const days = Math.floor(diff / 86400000);
     diff %= 86400000;

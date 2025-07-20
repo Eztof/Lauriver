@@ -2,7 +2,6 @@
 const regSection   = document.getElementById('register-section');
 const loginSection = document.getElementById('login-section');
 const dashSection  = document.getElementById('dashboard');
-const userDisplay  = document.getElementById('user-displayname');
 
 // Umschalten Login/Register
 document.getElementById('show-register').addEventListener('click', e => {
@@ -49,14 +48,14 @@ document.getElementById('btn-login').addEventListener('click', () => {
     .catch(err => alert(err.message));
 });
 
-// User-Daten in Realtime-DB anlegen oder updaten
+// User-Daten in Firestore anlegen oder updaten
 function setupUserData(user, username) {
-  const ref = db.ref('users/' + user.uid);
-  ref.once('value').then(snap => {
-    const now = Date.now();
-    if (!snap.exists()) {
+  const docRef = firestore.collection('users').doc(user.uid);
+  const now = Date.now();
+  docRef.get().then(doc => {
+    if (!doc.exists) {
       // Neu anlegen
-      ref.set({
+      docRef.set({
         username,
         createdAt: now,
         lastLogin: now,
@@ -65,7 +64,7 @@ function setupUserData(user, username) {
       });
     } else {
       // Nur letztes Login updaten
-      ref.update({ lastLogin: now });
+      docRef.update({ lastLogin: now });
     }
   });
 }
@@ -73,16 +72,11 @@ function setupUserData(user, username) {
 // Auth-State Listener
 auth.onAuthStateChanged(user => {
   if (user) {
-    // Eingeloggt
-    db.ref('users/' + user.uid + '/username').once('value')
-      .then(snap => userDisplay.textContent = snap.val() || 'Nutzer');
     loginSection.classList.add('hidden');
     regSection.classList.add('hidden');
     dashSection.classList.remove('hidden');
-    // Countdown starten
     startCounter();
   } else {
-    // Ausgeloggt
     dashSection.classList.add('hidden');
     loginSection.classList.remove('hidden');
   }
