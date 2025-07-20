@@ -11,6 +11,12 @@ import {
   updateProfile,
   signOut
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 2) Deine Firebase-Konfiguration
 const firebaseConfig = {
@@ -24,13 +30,30 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db   = getFirestore(app);
 
 // 3) Helper: aus Benutzername eine (künstliche) E‑Mail machen
 function emailFromUsername(username) {
   return `${username}@lauriver.app`;
 }
 
-// 4) Alle View‑Abschnitte & Buttons holen
+// 4) Nutzungsdaten protokollieren
+async function logUsage(eventType) {
+  const user = auth.currentUser;
+  try {
+    await addDoc(collection(db, "usageLogs"), {
+      uid:    user ? user.uid : null,
+      email:  user ? user.email : null,
+      event:  eventType,
+      ts:     serverTimestamp()
+    });
+    // console.log("Logged:", eventType);
+  } catch (e) {
+    console.error("Fehler beim Speichern der Nutzungsdaten:", e);
+  }
+}
+
+// 5) Alle View‑Abschnitte & Buttons holen
 const sections = {
   login:      document.getElementById("login-section"),
   register:   document.getElementById("register-section"),
@@ -42,24 +65,27 @@ const sections = {
 const header      = document.getElementById("main-header");
 const logoutBtn   = document.getElementById("logout-btn");
 
-// 5) View‑Wechsel
+// 6) View‑Wechsel
 function showView(name) {
   Object.values(sections).forEach(s => s.classList.add("hidden"));
   sections[name].classList.remove("hidden");
+  logUsage(`navigate_${name}`); // Nutzungs-Event protokollieren
 }
 
-// 6) Auth‑Status überwachen
+// 7) Auth‑Status überwachen
 onAuthStateChanged(auth, user => {
   if (user) {
     header.classList.remove("hidden");
     showView("home");
+    logUsage("login");
   } else {
     header.classList.add("hidden");
     showView("login");
+    logUsage("logout");
   }
 });
 
-// 7) Login‑Form
+// 8) Login‑Form
 document.getElementById("login-form").addEventListener("submit", e => {
   e.preventDefault();
   const u = document.getElementById("login-username").value.trim();
@@ -69,10 +95,13 @@ document.getElementById("login-form").addEventListener("submit", e => {
 
   setPersistence(auth, persistence)
     .then(() => signInWithEmailAndPassword(auth, emailFromUsername(u), p))
-    .catch(err => alert("Fehler beim Einloggen: " + err.message));
+    .catch(err => {
+      alert("Fehler beim Einloggen: " + err.message);
+      logUsage("login_error");
+    });
 });
 
-// 8) Registrieren‑Form
+// 9) Registrieren‑Form
 document.getElementById("register-form").addEventListener("submit", e => {
   e.preventDefault();
   const u  = document.getElementById("register-username").value.trim();
@@ -80,6 +109,7 @@ document.getElementById("register-form").addEventListener("submit", e => {
   const p2 = document.getElementById("register-password-confirm").value;
   if (p1 !== p2) {
     alert("Die Passwörter stimmen nicht überein.");
+    logUsage("register_password_mismatch");
     return;
   }
 
@@ -87,10 +117,14 @@ document.getElementById("register-form").addEventListener("submit", e => {
     .then(userCred =>
       updateProfile(userCred.user, { displayName: u })
     )
-    .catch(err => alert("Fehler bei der Registrierung: " + err.message));
+    .then(() => logUsage("register_success"))
+    .catch(err => {
+      alert("Fehler bei der Registrierung: " + err.message);
+      logUsage("register_error");
+    });
 });
 
-// 9) Links zwischen Login/Registrierung
+// 10) Links zwischen Login/Registrierung
 document.getElementById("to-register").addEventListener("click", e => {
   e.preventDefault();
   showView("register");
@@ -100,17 +134,18 @@ document.getElementById("to-login").addEventListener("click", e => {
   showView("login");
 });
 
-// 10) Logout‑Button
+// 11) Logout‑Button
 logoutBtn.addEventListener("click", () => {
-  signOut(auth);
+  signOut(auth)
+    .catch(err => console.error("Logout-Error:", err));
 });
 
-// 11) Navigation Startseite → Platzhalter
+// 12) Navigation Startseite → Platzhalter
 document.getElementById("nav-calendar").addEventListener("click", () => showView("calendar"));
 document.getElementById("nav-packlist").addEventListener("click", () => showView("packlist"));
 document.getElementById("nav-timeline").addEventListener("click", () => showView("timeline"));
 
-// 12) Zurück‑Buttons in den Untermenüs
+// 13) Zurück‑Buttons in den Untermenüs
 document.querySelectorAll(".back-btn").forEach(btn =>
   btn.addEventListener("click", () => showView("home"))
 );
