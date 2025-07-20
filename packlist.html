@@ -8,22 +8,26 @@
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Packliste</h1>
+    <header class="header">
+      <button id="btn-back" class="btn icon-btn">&larr;</button>
+      <h1>Packlisten</h1>
+      <button id="btn-new-list" class="btn primary">+ Neue Liste</button>
     </header>
 
+    <!-- Übersichtsseite -->
     <section id="lists-overview">
-      <button id="btn-new-list" class="action">Neue Packliste anlegen</button>
-      <ul id="lists"></ul>
-      <button id="btn-back" class="action">Zurück zur Startseite</button>
+      <ul id="lists" class="card-list"></ul>
     </section>
 
+    <!-- Detailseite -->
     <section id="list-detail" class="hidden">
-      <h2 id="list-title"></h2>
-      <button id="btn-add-item" class="action">Eintrag hinzufügen</button>
-      <ul id="items"></ul>
-      <button id="btn-delete-list" class="action danger">Packliste löschen</button>
-      <button id="btn-close-detail" class="action">Zurück</button>
+      <header class="header">
+        <button id="btn-close-detail" class="btn icon-btn">&larr;</button>
+        <h1 id="list-title"></h1>
+        <button id="btn-add-item" class="btn primary">+ Eintrag</button>
+      </header>
+      <ul id="items" class="card-list"></ul>
+      <button id="btn-delete-list" class="btn danger block">Liste löschen</button>
     </section>
   </div>
 

@@ -1,74 +1,109 @@
-/* Basis-Resets */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* --- Grundfarben --- */
+:root {
+  --bg-dark: #001f3f;
+  --bg-mid: #002d66;
+  --bg-light: #ffffff;
+  --text-light: #ffffff;
+  --text-dark: #001f3f;
+  --accent: #007bff;
+  --danger: #e74c3c;
 }
+
+/* --- Basis --- */
 body {
-  font-family: Arial, sans-serif;
-  line-height: 1.4;
-  background: #001f3f;         /* Dunkelblauer Hintergrund */
-  color: #ffffff;              /* Weißer Text */
+  background: var(--bg-dark);
+  color: var(--text-light);
 }
 .container {
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 1rem;
-  background: #002d66;         /* Etwas helleres Dunkelblau */
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  max-width: 480px;
+  margin: 1rem auto;
+  padding: 0;
 }
-header {
-  text-align: center;
-  margin-bottom: 1rem;
-}
-h1 {
-  color: #ffffff;
-}
-.auth-section, #dashboard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-.auth-section.hidden, #dashboard.hidden {
-  display: none;
-}
-input[type="text"],
-input[type="password"] {
-  padding: 0.5rem;
-  border: 1px solid #ffffff;
-  border-radius: 4px;
-  background: #003366;         /* Dunkles Eingabefeld */
-  color: #ffffff;
-}
-input::placeholder {
-  color: #cccccc;
-}
-button {
-  padding: 0.6rem;
-  border: none;
-  border-radius: 4px;
-  background-color: #007bff;    /* Helles Blau */
-  color: #ffffff;
-  font-size: 1rem;
-}
-button:hover {
-  background-color: #0056b3;
-  cursor: pointer;
-}
-label {
-  font-size: 0.9rem;
+
+/* --- Header --- */
+.header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  background: var(--bg-mid);
+  padding: 0.75rem 1rem;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+}
+.header h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+
+/* --- Listen als Karten --- */
+.card-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem;
+  background: var(--bg-mid);
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+.card-list li {
+  background: var(--bg-light);
+  color: var(--text-dark);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.card-list li.done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+/* --- Buttons --- */
+.btn {
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.btn.primary {
+  background: var(--accent);
+  color: var(--text-light);
+}
+.btn.danger {
+  background: var(--danger);
+  color: var(--text-light);
+}
+.btn.block {
+  display: block;
+  width: calc(100% - 2rem);
+  margin: 1rem auto;
+}
+.icon-btn {
+  background: transparent;
+  color: var(--text-light);
+  font-size: 1.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* --- Kleine Aktions-Buttons in Karten --- */
+.card-list li .actions {
+  display: flex;
   gap: 0.5rem;
-  color: #ffffff;
 }
-#counter {
-  font-size: 1.5rem;
-  font-weight: bold;
-  text-align: center;
+.card-list li .actions button {
+  background: transparent;
+  color: var(--text-dark);
+  font-size: 1rem;
+  padding: 0;
 }
+
+/* --- Responsivität --- */
 @media (max-width: 480px) {
-  .container { padding: 0.5rem; }
-  button { font-size: 0.9rem; }
+  .header h1 {
+    font-size: 1rem;
+  }
 }
