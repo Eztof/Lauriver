@@ -1,101 +1,72 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>Lauriver</title>
-  <link rel="stylesheet" href="css/style.css"/>
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/app.js" defer></script>
 </head>
 <body>
-  <div class="container">
-
-    <!-- LOGIN -->
-    <section id="login-section" class="auth-section">
-      <h1>Lauriver</h1>
-      <form id="form-login" class="auth-form">
-        <label for="login-username">Benutzername</label>
-        <input id="login-username" name="username" type="text"
-               placeholder="Benutzername" autocomplete="username" required/>
-        
-        <label for="login-password">Passwort</label>
-        <input id="login-password" name="password" type="password"
-               placeholder="Passwort" autocomplete="current-password" required/>
-        
-        <label class="checkbox">
-          <input id="login-remember" type="checkbox"/>
-          <span>Gerät merken</span>
-        </label>
-        
-        <button type="submit" class="btn primary">Einloggen</button>
+  <header id="main-header" class="hidden">
+    <h1>Lauriver</h1>
+    <button id="logout-btn">Logout</button>
+  </header>
+  <main>
+    <!-- Login -->
+    <section id="login-section" class="view">
+      <h2>Einloggen</h2>
+      <form id="login-form">
+        <input type="text" id="login-username" placeholder="Benutzername" required>
+        <input type="password" id="login-password" placeholder="Passwort" required>
+        <label><input type="checkbox" id="remember-device"> Gerät merken</label>
+        <button type="submit">Einloggen</button>
       </form>
-      <p class="switch">
-        Noch keinen Account? 
-        <a href="#" id="show-register">Registrieren</a>
-      </p>
+      <p>Noch keinen Account? <a href="#" id="to-register">Registrieren</a></p>
     </section>
 
-    <!-- REGISTER -->
-    <section id="register-section" class="auth-section hidden">
-      <h1>Lauriver</h1>
-      <form id="form-register" class="auth-form">
-        <label for="reg-username">Benutzername</label>
-        <input id="reg-username" name="username" type="text"
-               placeholder="Benutzername" autocomplete="username" required/>
-        
-        <label for="reg-password">Passwort</label>
-        <input id="reg-password" name="password" type="password"
-               placeholder="Passwort" autocomplete="new-password" required/>
-        
-        <label class="checkbox">
-          <input id="reg-remember" type="checkbox"/>
-          <span>Gerät merken</span>
-        </label>
-        
-        <button type="submit" class="btn primary">Registrieren</button>
+    <!-- Registrierung -->
+    <section id="register-section" class="view hidden">
+      <h2>Registrieren</h2>
+      <form id="register-form">
+        <input type="text" id="register-username" placeholder="Benutzername" required>
+        <input type="password" id="register-password" placeholder="Passwort" required>
+        <input type="password" id="register-password-confirm" placeholder="Passwort bestätigen" required>
+        <button type="submit">Registrieren</button>
       </form>
-      <p class="switch">
-        Bereits registriert? 
-        <a href="#" id="show-login">Einloggen</a>
-      </p>
+      <p>Bereits registriert? <a href="#" id="to-login">Einloggen</a></p>
     </section>
 
-    <!-- DASHBOARD -->
-    <section id="dashboard" class="hidden">
-      <header class="header">
-        <h1>Lauriver</h1>
-        <button id="btn-logout" class="btn secondary">Logout</button>
-      </header>
-      <div class="content">
-        <div id="counter" class="card centered"></div>
-        <button id="btn-packlist" class="btn primary block">
-          Packlisten verwalten
-        </button>
-      </div>
+    <!-- Startseite nach Login -->
+    <section id="home-section" class="view hidden">
+      <h2>Startseite</h2>
+      <nav>
+        <button id="nav-calendar">Kalender</button>
+        <button id="nav-packlist">Packliste</button>
+        <button id="nav-timeline">Zeitstrang</button>
+      </nav>
     </section>
 
-  </div>
+    <!-- Platzhalter: Kalender -->
+    <section id="calendar-section" class="view hidden">
+      <button class="back-btn">← Zurück</button>
+      <h2>Kalender</h2>
+      <p>Hier kommt später dein Kalender.</p>
+    </section>
 
-  <!-- Firebase & App Scripts -->
-  <script type="module" src="js/firebase-config.js"></script>
-  <script type="module" src="js/auth.js"></script>
-  <script src="js/countdown.js"></script>
-  <script>
-    // Formular-Sektion umschalten
-    document.getElementById('show-register').addEventListener('click', e => {
-      e.preventDefault();
-      document.getElementById('login-section').classList.add('hidden');
-      document.getElementById('register-section').classList.remove('hidden');
-    });
-    document.getElementById('show-login').addEventListener('click', e => {
-      e.preventDefault();
-      document.getElementById('register-section').classList.add('hidden');
-      document.getElementById('login-section').classList.remove('hidden');
-    });
+    <!-- Platzhalter: Packliste -->
+    <section id="packlist-section" class="view hidden">
+      <button class="back-btn">← Zurück</button>
+      <h2>Packliste</h2>
+      <p>Hier kommt später deine Packliste.</p>
+    </section>
 
-    // Navigation zu Packliste
-    document.getElementById('btn-packlist')?.addEventListener('click', () => {
-      window.location.href = 'packlist.html';
-    });
-  </script>
+    <!-- Platzhalter: Zeitstrang -->
+    <section id="timeline-section" class="view hidden">
+      <button class="back-btn">← Zurück</button>
+      <h2>Zeitstrang</h2>
+      <p>Hier kommt später dein Zeitstrang.</p>
+    </section>
+  </main>
 </body>
 </html>

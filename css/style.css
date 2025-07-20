@@ -1,152 +1,74 @@
-:root {
-  --bg: #001f3f;
-  --panel: #002d66;
-  --card: #ffffff;
-  --text-light: #ffffff;
-  --text-dark: #001f3f;
-  --accent: #007bff;
-  --secondary: #0056b3;
-  --danger: #e74c3c;
-}
-
-* { margin:0; padding:0; box-sizing:border-box; }
+/* Basis-Reset & Mobile-Optimierung */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
 body {
   font-family: Arial, sans-serif;
-  background: var(--bg);
-  color: var(--text-light);
-  min-height:100vh;
+  background: #f5f5f5;
+  color: #333;
 }
-.container {
-  max-width:480px;
-  margin:2rem auto;
-  padding:0 1rem;
-}
-
-.auth-section {
-  background: var(--panel);
-  padding:2rem 1rem;
-  border-radius:8px;
-  text-align:center;
-}
-.auth-section.hidden { display:none; }
-.auth-section h1 { margin-bottom:1.5rem; }
-.auth-form {
-  display:flex; flex-direction:column; gap:0.75rem;
-}
-.auth-form label { text-align:left; font-size:0.9rem; }
-.auth-form input[type="text"],
-.auth-form input[type="password"] {
-  padding:0.5rem; border:none; border-radius:4px;
-}
-.checkbox {
-  display:flex; align-items:center; gap:0.5rem;
-  font-size:0.9rem; justify-content:flex-start;
-}
-.switch {
-  margin-top:1rem; font-size:0.9rem;
-}
-.switch a { color: var(--accent); text-decoration:none; }
-.switch a:hover { text-decoration:underline; }
-
-.btn {
-  border:none; border-radius:4px; padding:0.6rem; font-size:1rem;
-  cursor:pointer;
-}
-.btn.primary { background: var(--accent); color:#fff; }
-.btn.secondary { background: var(--secondary); color:#fff; }
-.btn.danger { background: var(--danger); color:#fff; }
-.block { display:block; width:100%; margin-top:1rem; }
-.centered { text-align:center; }
-
-.header {
-  display:flex; justify-content:space-between; align-items:center;
-  background: var(--panel); padding:0.75rem 1rem; border-radius:8px 8px 0 0;
-}
-.content {
-  background: var(--panel); padding:1.5rem 1rem; border-radius:0 0 8px 8px;
-  display:flex; flex-direction:column; gap:1rem;
-}
-
-.card {
-  background: var(--card); color: var(--text-dark);
-  border-radius:6px; padding:1rem;
-  box-shadow:0 1px 3px rgba(0,0,0,0.2);
-}
-
-#counter { font-size:1.25rem; }
-
-.hidden { display:none; }
-
-/* LISTEN-SEITEN STYLES */
-.card-list {
-  list-style:none; padding:1rem; background: var(--panel);
-  border-radius:0 0 8px 8px; margin-top:-0.5rem;
-}
-.card-list li {
-  background: var(--card); color: var(--text-dark);
-  padding:0.75rem 1rem; margin-bottom:0.5rem;
-  border-radius:6px; display:flex; justify-content:space-between;
-  align-items:center; box-shadow:0 1px 2px rgba(0,0,0,0.1);
-}
-.card-list li.done { text-decoration:line-through; opacity:0.6; }
-.actions { display:flex; gap:0.5rem; }
-.actions button {
-  background:transparent; border:none; cursor:pointer; font-size:0.9rem;
-  color: var(--accent);
-}
-.actions button.delete { color: var(--danger); }
-
-/* Inline‑Form am unteren Rand */
-.inline-form {
+header {
   display: flex;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  background: var(--panel);
-  position: sticky;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  border-top: 1px solid rgba(255,255,255,0.2);
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #6200ee;
+  color: white;
 }
-.inline-form input[type="text"],
-.inline-form input[type="number"] {
-  flex: 1;
-  padding: 0.5rem;
+header h1 { font-size: 1.25rem; }
+header #logout-btn {
+  background: #bb86fc;
   border: none;
-  border-radius: 4px;
-}
-.inline-form input[type="number"] {
-  width: 4rem;
-  text-align: center;
-}
-.inline-form button {
-  flex-shrink: 0;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  color: white;
+  font-size: 1rem;
 }
 
-/* Übersichts‑ und Detailbereiche */
-.pack-section {
+/* Views */
+.view { display: none; }
+.view:not(.hidden) { display: block; }
+.hidden { display: none; }
+
+main {
+  padding: 1rem;
+}
+
+/* Formulare & Buttons */
+form {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 2rem);
-  margin-top: 1rem;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
-.pack-section .card-list {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0.5rem;
-}
-
-/* Versteckte Elemente */
-.hidden {
-  display: none !important;
-}
-
-/* Anpassung Touch‑Targets */
-.card-list li {
-  padding: 1rem;
+input {
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
   font-size: 1rem;
 }
-.btn {
+button {
+  padding: 0.75rem;
+  border: none;
+  border-radius: 0.5rem;
+  background: #6200ee;
+  color: white;
   font-size: 1rem;
-  padding: 0.75rem 1rem;
+  cursor: pointer;
+}
+button.back-btn {
+  background: none;
+  color: #6200ee;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  text-align: left;
+}
+
+/* Navigation auf der Startseite */
+nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+nav button {
+  width: 100%;
 }
