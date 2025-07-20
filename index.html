@@ -8,22 +8,29 @@
 </head>
 <body>
   <div class="container">
+
     <!-- LOGIN -->
     <section id="login-section" class="auth-section">
       <h1>Lauriver</h1>
       <form id="form-login" class="auth-form">
         <label for="login-username">Benutzername</label>
-        <input id="login-username" name="username" type="text" autocomplete="username" required/>
+        <input id="login-username" name="username" type="text"
+               placeholder="Benutzername" autocomplete="username" required/>
+        
         <label for="login-password">Passwort</label>
-        <input id="login-password" name="password" type="password" autocomplete="current-password" required/>
+        <input id="login-password" name="password" type="password"
+               placeholder="Passwort" autocomplete="current-password" required/>
+        
         <label class="checkbox">
           <input id="login-remember" type="checkbox"/>
           <span>Gerät merken</span>
         </label>
+        
         <button type="submit" class="btn primary">Einloggen</button>
       </form>
       <p class="switch">
-        Noch keinen Account? <a href="#" id="show-register">Registrieren</a>
+        Noch keinen Account? 
+        <a href="#" id="show-register">Registrieren</a>
       </p>
     </section>
 
@@ -32,17 +39,23 @@
       <h1>Lauriver</h1>
       <form id="form-register" class="auth-form">
         <label for="reg-username">Benutzername</label>
-        <input id="reg-username" name="username" type="text" autocomplete="username" required/>
+        <input id="reg-username" name="username" type="text"
+               placeholder="Benutzername" autocomplete="username" required/>
+        
         <label for="reg-password">Passwort</label>
-        <input id="reg-password" name="password" type="password" autocomplete="new-password" required/>
+        <input id="reg-password" name="password" type="password"
+               placeholder="Passwort" autocomplete="new-password" required/>
+        
         <label class="checkbox">
           <input id="reg-remember" type="checkbox"/>
           <span>Gerät merken</span>
         </label>
+        
         <button type="submit" class="btn primary">Registrieren</button>
       </form>
       <p class="switch">
-        Bereits registriert? <a href="#" id="show-login">Einloggen</a>
+        Bereits registriert? 
+        <a href="#" id="show-login">Einloggen</a>
       </p>
     </section>
 
@@ -54,9 +67,12 @@
       </header>
       <div class="content">
         <div id="counter" class="card centered"></div>
-        <button id="btn-packlist" class="btn primary block">Packlisten verwalten</button>
+        <button id="btn-packlist" class="btn primary block">
+          Packlisten verwalten
+        </button>
       </div>
     </section>
+
   </div>
 
   <!-- Firebase & App Scripts -->
@@ -64,7 +80,20 @@
   <script type="module" src="js/auth.js"></script>
   <script src="js/countdown.js"></script>
   <script>
-    document.getElementById('btn-packlist').addEventListener('click', () => {
+    // Formular-Sektion umschalten
+    document.getElementById('show-register').addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById('login-section').classList.add('hidden');
+      document.getElementById('register-section').classList.remove('hidden');
+    });
+    document.getElementById('show-login').addEventListener('click', e => {
+      e.preventDefault();
+      document.getElementById('register-section').classList.add('hidden');
+      document.getElementById('login-section').classList.remove('hidden');
+    });
+
+    // Navigation zu Packliste
+    document.getElementById('btn-packlist')?.addEventListener('click', () => {
       window.location.href = 'packlist.html';
     });
   </script>
