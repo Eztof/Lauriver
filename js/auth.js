@@ -1,4 +1,4 @@
-// Imports aus firebase-config.js und SDKs
+// js/auth.js
 import { auth, firestore } from "./firebase-config.js";
 import {
   setPersistence,
@@ -18,9 +18,8 @@ import {
   addDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-import { startCounter } from "./countdown.js";  // falls countdown modular exportiert wird
 
-// Elemente referenzieren
+// Elemente
 const regSection   = document.getElementById('register-section');
 const loginSection = document.getElementById('login-section');
 const dashSection  = document.getElementById('dashboard');
@@ -28,12 +27,11 @@ const formRegister = document.getElementById('form-register');
 const formLogin    = document.getElementById('form-login');
 const btnLogout    = document.getElementById('btn-logout');
 
-// --- Hilfsfunktionen ---
+// Checkbox-Elemente
+const remReg   = document.getElementById('reg-remember');
+const remLogin = document.getElementById('login-remember');
 
-/**
- * Schreibe ein Nutzungs-Event in Firestore:
- * users/{uid}/usage/{auto-id}
- */
+// Hilfsfunktionen
 async function logUsage(uid, eventName, details = {}) {
   try {
     const usageCol = collection(firestore, "users", uid, "usage");
@@ -47,9 +45,6 @@ async function logUsage(uid, eventName, details = {}) {
   }
 }
 
-/**
- * Wähle Persistence (Session vs. Local) je nach 'remember'-Checkbox
- */
 function applyPersistence(remember) {
   const mode = remember
     ? browserLocalPersistence
@@ -57,33 +52,25 @@ function applyPersistence(remember) {
   return setPersistence(auth, mode);
 }
 
-/**
- * Lege den User-Stammdatensatz an oder aktualisiere lastLogin
- */
 async function setupUserData(uid, username) {
   const now = Date.now();
   const userDoc = doc(firestore, "users", uid);
   const snap    = await getDoc(userDoc);
 
   if (!snap.exists()) {
-    // Neu anlegen
     await setDoc(userDoc, {
       username,
       createdAt: now,
       lastLogin: now,
       settings: {}
     });
-    // Erstes Event: registration
     await logUsage(uid, "registration");
   } else {
-    // Nur letztes Login updaten
     await updateDoc(userDoc, { lastLogin: now });
   }
 }
 
-// --- Event-Handler ---
-
-// Umschalten Login/Register
+// Form-Switch
 document.getElementById('show-register').addEventListener('click', e => {
   e.preventDefault();
   loginSection.classList.add('hidden');
@@ -98,15 +85,20 @@ document.getElementById('show-login').addEventListener('click', e => {
 // Registrierung
 formRegister.addEventListener('submit', async e => {
   e.preventDefault();
-  const u   = formRegister['username'].value.trim();
-  const p   = formRegister['password'].value;
-  const rem = formRegister['reg-remember'].checked;
-  if (!u || !p) return alert('Bitte Benutzername und Passwort eingeben.');
+  const username = formRegister['username'].value.trim();
+  const password = formRegister['password'].value;
+  if (!username || !password) {
+    return alert('Bitte Benutzername und Passwort eingeben.');
+  }
 
   try {
-    await applyPersistence(rem);
-    const cred = await createUserWithEmailAndPassword(auth, `${u}@lauriver.local`, p);
-    await setupUserData(cred.user.uid, u);
+    await applyPersistence(remReg.checked);
+    const cred = await createUserWithEmailAndPassword(
+      auth,
+      `${username}@lauriver.local`,
+      password
+    );
+    await setupUserData(cred.user.uid, username);
   } catch (err) {
     alert(err.message);
   }
@@ -115,15 +107,19 @@ formRegister.addEventListener('submit', async e => {
 // Login
 formLogin.addEventListener('submit', async e => {
   e.preventDefault();
-  const u   = formLogin['username'].value.trim();
-  const p   = formLogin['password'].value;
-  const rem = formLogin['login-remember'].checked;
-  if (!u || !p) return alert('Bitte Benutzername und Passwort eingeben.');
+  const username = formLogin['username'].value.trim();
+  const password = formLogin['password'].value;
+  if (!username || !password) {
+    return alert('Bitte Benutzername und Passwort eingeben.');
+  }
 
   try {
-    await applyPersistence(rem);
-    const cred = await signInWithEmailAndPassword(auth, `${u}@lauriver.local`, p);
-    // Logge das Login-Event
+    await applyPersistence(remLogin.checked);
+    const cred = await signInWithEmailAndPassword(
+      auth,
+      `${username}@lauriver.local`,
+      password
+    );
     await logUsage(cred.user.uid, "login");
   } catch (err) {
     alert(err.message);
@@ -133,13 +129,14 @@ formLogin.addEventListener('submit', async e => {
 // Auth-State Listener
 onAuthStateChanged(auth, user => {
   if (user) {
-    // Eingeloggt
     loginSection.classList.add('hidden');
     regSection.classList.add('hidden');
     dashSection.classList.remove('hidden');
-    startCounter(); 
+    // startCounter ist global definiert in countdown.js
+    if (typeof startCounter === 'function') {
+      startCounter();
+    }
   } else {
-    // Ausgeloggt
     dashSection.classList.add('hidden');
     loginSection.classList.remove('hidden');
   }
@@ -149,7 +146,6 @@ onAuthStateChanged(auth, user => {
 btnLogout.addEventListener('click', async () => {
   const user = auth.currentUser;
   if (!user) return;
-  // Logge das Logout-Event
   await logUsage(user.uid, "logout");
   await signOut(auth);
 });
