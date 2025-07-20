@@ -43,7 +43,6 @@
       <nav>
         <button id="nav-calendar">Kalender</button>
         <button id="nav-packlist">Packliste</button>
-        <button id="nav-timeline">Zeitstrang</button>
       </nav>
     </section>
 
@@ -51,21 +50,32 @@
     <section id="calendar-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Kalender</h2>
-      <form id="event-form">
-        <input type="text" id="event-title" placeholder="Titel" required>
-        <input type="date" id="event-date" required>
-        <input type="time" id="event-time" required>
-        <button type="submit">Event hinzufügen</button>
+
+      <!-- Kategorie erstellen -->
+      <form id="category-form">
+        <input type="text" id="category-input" placeholder="Neue Kategorie hinzufügen" required>
+        <button type="submit">Kategorie erstellen</button>
       </form>
-      <ul id="event-list"></ul>
+
+      <!-- Kalender-Grid -->
+      <div id="calendar"></div>
+
+      <!-- Datumsauswahl -->
+      <div id="date-selection" class="hidden">
+        <h3 id="selected-date"></h3>
+        <form id="date-form"></form>
+      </div>
+
+      <!-- Zeitstrang -->
+      <div id="timeline"></div>
     </section>
 
     <!-- PACKLISTE -->
     <section id="packlist-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Packliste</h2>
-      <form id="category-form">
-        <input type="text" id="category-input" placeholder="Neue Kategorie hinzufügen" required>
+      <form id="category-form-pack">
+        <input type="text" id="category-input-pack" placeholder="Neue Kategorie hinzufügen" required>
         <button type="submit">Kategorie erstellen</button>
       </form>
       <form id="packlist-form">
@@ -76,43 +86,6 @@
         <button type="submit">Hinzufügen</button>
       </form>
       <ul id="packlist-items"></ul>
-    </section>
-
-    <!-- ZEITSTRANG -->
-    <section id="timeline-section" class="view hidden">
-      <button class="back-btn">← Zurück</button>
-      <h2>Zeitstrang</h2>
-
-      <!-- Kategorien verwalten -->
-      <div id="tl-categories">
-        <input type="text" id="tl-category-input" placeholder="Neue Kategorie" />
-        <button id="tl-add-category">Hinzufügen</button>
-      </div>
-
-      <!-- Monats-Kalender -->
-      <div id="tl-calendar">
-        <button id="prev-month">«</button>
-        <span id="month-label"></span>
-        <button id="next-month">»</button>
-        <table id="calendar-table">
-          <thead>
-            <tr>
-              <th>Mo</th><th>Di</th><th>Mi</th><th>Do</th><th>Fr</th><th>Sa</th><th>So</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-
-      <!-- Checkbox-Dialog -->
-      <div id="tl-dialog" class="hidden">
-        <h3 id="tl-dialog-date"></h3>
-        <div id="tl-dialog-list"></div>
-        <button id="tl-dialog-close">Schließen</button>
-      </div>
-
-      <!-- Wochen-Stränge -->
-      <div id="tl-strands"></div>
     </section>
   </main>
 </body>

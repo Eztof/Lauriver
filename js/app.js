@@ -1,16 +1,28 @@
 // 1) Firebase‑SDK importieren (Auth + Firestore)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getAuth, setPersistence,
-  browserLocalPersistence, browserSessionPersistence,
-  signInWithEmailAndPassword, createUserWithEmailAndPassword,
-  onAuthStateChanged, updateProfile, signOut
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged,
+  updateProfile,
+  signOut
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
-  getFirestore, collection, addDoc, doc,
-  setDoc, updateDoc, deleteDoc,
-  query, orderBy, onSnapshot,
-  serverTimestamp, Timestamp
+  getFirestore,
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  addDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 2) Firebase‑Konfiguration
@@ -28,231 +40,372 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 // 3) Hilfsfunktionen
-function emailFromUsername(u){ return `${u}@lauriver.app`; }
-function randomColor(){
-  return "#"+Math.floor(Math.random()*0xFFFFFF).toString(16).padStart(6,"0");
+function emailFromUsername(u) {
+  return `${u}@lauriver.app`;
 }
-async function updateUsage(updates){
-  const u = auth.currentUser; if(!u) return;
-  await setDoc(doc(db,"usage_logs",u.uid),{...updates,lastUpdate:serverTimestamp()},{merge:true});
+function randomColor() {
+  return `hsl(${Math.random()*360}, 70%, 60%)`;
+}
+async function updateUsage(updates) {
+  const u = auth.currentUser;
+  if (!u) return;
+  await setDoc(doc(db, "usage_logs", u.uid), { ...updates, lastUpdate: serverTimestamp() }, { merge: true });
 }
 
 // 4) UI‑Referenzen
-const sections     = {
-  login:      document.getElementById("login-section"),
-  register:   document.getElementById("register-section"),
-  home:       document.getElementById("home-section"),
-  calendar:   document.getElementById("calendar-section"),
-  packlist:   document.getElementById("packlist-section"),
-  timeline:   document.getElementById("timeline-section")
+const sections = {
+  login:    document.getElementById("login-section"),
+  register: document.getElementById("register-section"),
+  home:     document.getElementById("home-section"),
+  calendar: document.getElementById("calendar-section"),
+  packlist: document.getElementById("packlist-section")
 };
-const logoutBtn      = document.getElementById("logout-btn");
-// (Kalender- und Packliste-Refs wie gehabt, siehe vorherige Version…)
+const logoutBtn       = document.getElementById("logout-btn");
+const navCalendarBtn  = document.getElementById("nav-calendar");
+const navPacklistBtn  = document.getElementById("nav-packlist");
 
-// Timeline‑Refs
-const catInput       = document.getElementById("tl-category-input");
-const catAddBtn      = document.getElementById("tl-add-category");
-const monthLabel     = document.getElementById("month-label");
-const prevMonthBtn   = document.getElementById("prev-month");
-const nextMonthBtn   = document.getElementById("next-month");
-const calBody        = document.querySelector("#calendar-table tbody");
-const dialog         = document.getElementById("tl-dialog");
-const dlgDateLabel   = document.getElementById("tl-dialog-date");
-const dlgList        = document.getElementById("tl-dialog-list");
-const dlgClose       = document.getElementById("tl-dialog-close");
-const strandsDiv     = document.getElementById("tl-strands");
+const categoryForm    = document.getElementById("category-form");
+const categoryInput   = document.getElementById("category-input");
+const calendarDiv     = document.getElementById("calendar");
+const dateSelDiv      = document.getElementById("date-selection");
+const selectedDateH3  = document.getElementById("selected-date");
+const dateForm        = document.getElementById("date-form");
+const timelineDiv     = document.getElementById("timeline");
 
-// State Timeline
-let today = new Date();
-let viewYear = today.getFullYear(), viewMonth = today.getMonth();
-let tlCategories = [], tlEntries = [];
+const categoryFormPack  = document.getElementById("category-form-pack");
+const categoryInputPack = document.getElementById("category-input-pack");
+const packForm          = document.getElementById("packlist-form");
+const packInput         = document.getElementById("packlist-input");
+const categorySelect    = document.getElementById("category-select");
+const packListUl        = document.getElementById("packlist-items");
 
-// --- View‑Switch ---
-function showView(name){
-  Object.values(sections).forEach(s=>s.classList.add("hidden"));
+// 5) State
+let categories = [];
+let items      = [];
+let selections = [];
+let selectedDate = null;
+
+let catUnsub, packUnsub, selUnsub;
+
+// 6) View‑Switch
+function showView(name) {
+  Object.values(sections).forEach(s => s.classList.add("hidden"));
   sections[name].classList.remove("hidden");
-  updateUsage({[`lastView_${name}`]:serverTimestamp()});
+  updateUsage({ [`lastView_${name}`]: serverTimestamp() });
 }
 
-// --- Auth‑Listener & Realtime Listener ---
-let tlCatUnsub, tlEntryUnsub;
-onAuthStateChanged(auth,user=>{
-  if(user){
+// 7) Auth‑Listener & Live‑Listener starten
+onAuthStateChanged(auth, user => {
+  if (user) {
+    document.getElementById("main-header").classList.remove("hidden");
     showView("home");
-    updateUsage({lastLogin:serverTimestamp(),displayName:user.displayName});
-    // Timeline: Kategorien
-    if(tlCatUnsub) tlCatUnsub();
-    tlCatUnsub = onSnapshot(
-      query(collection(db,"timeline_categories"),orderBy("createdAt")),
-      snap=>{
-        tlCategories = snap.docs.map(d=>({id:d.id,...d.data()}));
-        renderCategories();
-      }
-    );
-    // Timeline: Einträge
-    if(tlEntryUnsub) tlEntryUnsub();
-    tlEntryUnsub = onSnapshot(
-      query(collection(db,"timeline_entries"),orderBy("date")),
-      snap=>{
-        tlEntries = snap.docs.map(d=>({id:d.id,...d.data()}));
+    updateUsage({ lastLogin: serverTimestamp(), displayName: user.displayName });
+
+    // --- Kategorien ---
+    if (catUnsub) catUnsub();
+    catUnsub = onSnapshot(
+      query(collection(db, "packlist_categories"), orderBy("createdAt")),
+      snap => {
+        categories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        rebuildCategoryUI();
         renderCalendar();
-        renderStrands();
+        renderTimeline();
+        if (selectedDate) loadDateSelection(selectedDate);
       }
     );
+
+    // --- Packliste ---
+    if (packUnsub) packUnsub();
+    packUnsub = onSnapshot(
+      query(collection(db, "packlist_items"), orderBy("createdAt")),
+      snap => {
+        items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderPacklist();
+      }
+    );
+
+    // --- Datumsauswahl (calendar selections) ---
+    if (selUnsub) selUnsub();
+    selUnsub = onSnapshot(
+      collection(db, "calendar_selections"),
+      snap => {
+        selections = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderTimeline();
+        if (selectedDate) loadDateSelection(selectedDate);
+      }
+    );
+
+    // Erst‑Render
+    renderCalendar();
+    renderTimeline();
+
   } else {
-    tlCatUnsub && tlCatUnsub();
-    tlEntryUnsub && tlEntryUnsub();
+    if (catUnsub) catUnsub();
+    if (packUnsub) packUnsub();
+    if (selUnsub) selUnsub();
+    document.getElementById("main-header").classList.add("hidden");
     showView("login");
   }
 });
 
-// --- Login/Register/Logout (wie zuvor) ---
-// … code unverändert …
+// 8) Login
+document.getElementById("login-form").addEventListener("submit", e => {
+  e.preventDefault();
+  const u   = document.getElementById("login-username").value.trim();
+  const p   = document.getElementById("login-password").value;
+  const rem = document.getElementById("remember-device").checked;
+  setPersistence(auth, rem ? browserLocalPersistence : browserSessionPersistence)
+    .then(() => signInWithEmailAndPassword(auth, emailFromUsername(u), p))
+    .then(() => updateUsage({ lastLogin: serverTimestamp(), remember: rem }))
+    .catch(err => alert("Fehler beim Einloggen: " + err.message));
+});
 
-// --- Timeline: Kategorie hinzufügen ---
-catAddBtn.addEventListener("click",async()=>{
-  const name = catInput.value.trim(); if(!name) return;
-  await addDoc(collection(db,"timeline_categories"),{
-    name, color: randomColor(),
-    createdAt:serverTimestamp(),
-    createdBy:auth.currentUser.uid
+// 9) Registrierung
+document.getElementById("register-form").addEventListener("submit", async e => {
+  e.preventDefault();
+  const u  = document.getElementById("register-username").value.trim();
+  const p1 = document.getElementById("register-password").value;
+  const p2 = document.getElementById("register-password-confirm").value;
+  if (p1 !== p2) return alert("Passwörter stimmen nicht überein.");
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, emailFromUsername(u), p1);
+    await updateProfile(cred.user, { displayName: u });
+    await setDoc(doc(db, "usage_logs", cred.user.uid), {
+      createdAt: serverTimestamp(),
+      lastLogin: serverTimestamp(),
+      displayName: u
+    });
+  } catch (err) {
+    alert("Registrierung fehlgeschlagen: " + err.message);
+  }
+});
+
+// 10) Links Login ↔ Registrierung
+document.getElementById("to-register").addEventListener("click", e => {
+  e.preventDefault();
+  showView("register");
+});
+document.getElementById("to-login").addEventListener("click", e => {
+  e.preventDefault();
+  showView("login");
+});
+
+// 11) Logout
+logoutBtn.addEventListener("click", async () => {
+  await updateUsage({ lastLogout: serverTimestamp() });
+  signOut(auth);
+});
+
+// 12) Navigation Startseite
+navCalendarBtn.addEventListener("click", () => showView("calendar"));
+navPacklistBtn.addEventListener("click", () => showView("packlist"));
+document.querySelectorAll(".back-btn").forEach(btn =>
+  btn.addEventListener("click", () => showView("home"))
+);
+
+// 13) Kategorien erstellen (global)
+categoryForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = categoryInput.value.trim();
+  if (!name) return;
+  await addDoc(collection(db, "packlist_categories"), {
+    name,
+    color: randomColor(),
+    createdAt: serverTimestamp(),
+    createdBy: auth.currentUser.uid
   });
-  catInput.value="";
+  categoryInput.value = "";
+});
+categoryFormPack.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = categoryInputPack.value.trim();
+  if (!name) return;
+  await addDoc(collection(db, "packlist_categories"), {
+    name,
+    color: randomColor(),
+    createdAt: serverTimestamp(),
+    createdBy: auth.currentUser.uid
+  });
+  categoryInputPack.value = "";
 });
 
-// --- Timeline: Monats-Nav ---
-prevMonthBtn.addEventListener("click",()=>{
-  viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;}
-  renderCalendar();
-});
-nextMonthBtn.addEventListener("click",()=>{
-  viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;}
-  renderCalendar();
+// 14) Packliste: Neues Item
+packForm.addEventListener("submit", e => {
+  e.preventDefault();
+  const text = packInput.value.trim();
+  const cat  = categorySelect.value || null;
+  if (!text) return;
+  addDoc(collection(db, "packlist_items"), {
+    text,
+    done: false,
+    categoryId: cat,
+    createdAt: serverTimestamp(),
+    createdBy: auth.currentUser.uid
+  });
+  packInput.value = "";
 });
 
-// --- Render Kategorien (Dialog-Checkliste) ---
-function renderCategories(){
-  dlgList.innerHTML="";
-  tlCategories.forEach(cat=>{
-    const id = `chk-${cat.id}`;
-    const wrap = document.createElement("label");
-    wrap.innerHTML = `<input type="checkbox" id="${id}"/> ${cat.name}`;
-    dlgList.append(wrap);
+// 15) Datumsauswahl: speichern
+function saveDateSelection() {
+  const checked = Array.from(dateForm.querySelectorAll('input[name="date-category"]:checked'))
+    .map(cb => cb.value);
+  const ref = doc(db, "calendar_selections", selectedDate);
+  if (checked.length) {
+    setDoc(ref, { categories: checked, updatedAt: serverTimestamp() }, { merge: true });
+  } else {
+    deleteDoc(ref);
+  }
+}
+
+// 16) Hilfs‑Renderer: Kategorien & Datumsauswahl‑Form
+function rebuildCategoryUI() {
+  // Packliste‑Dropdown
+  categorySelect.innerHTML = `<option value="">– Keine Kategorie –</option>` +
+    categories.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+
+  // Datumsauswahl‑Form
+  dateForm.innerHTML = "";
+  categories.forEach(c => {
+    const label = document.createElement("label");
+    label.style.color = c.color;
+    label.innerHTML = `<input type="checkbox" name="date-category" value="${c.id}"> ${c.name}`;
+    dateForm.append(label);
+  });
+  dateForm.querySelectorAll('input[name="date-category"]').forEach(cb =>
+    cb.addEventListener("change", saveDateSelection)
+  );
+}
+
+// 17) Render Calendar
+function renderCalendar() {
+  calendarDiv.innerHTML = "";
+  // Wochentags-Header
+  ["Mo","Di","Mi","Do","Fr","Sa","So"].forEach(d=>{
+    const hdr = document.createElement("div");
+    hdr.textContent = d;
+    hdr.classList.add("calendar-header");
+    calendarDiv.append(hdr);
+  });
+  const now = new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const first = new Date(year, month, 1);
+  const last  = new Date(year, month+1, 0).getDate();
+  let startDay = first.getDay(); // 0=So,1=Mo...
+  startDay = startDay === 0 ? 6 : startDay-1;
+  // leere Felder
+  for(let i=0;i<startDay;i++){
+    const empty = document.createElement("div");
+    empty.classList.add("calendar-day","calendar-empty");
+    calendarDiv.append(empty);
+  }
+  // Tage
+  for(let d=1; d<=last; d++){
+    const cell = document.createElement("div");
+    cell.textContent = d;
+    cell.classList.add("calendar-day");
+    const ds = new Date(year,month,d).toISOString().slice(0,10);
+    cell.dataset.date = ds;
+    cell.addEventListener("click",()=>handleDateClick(ds));
+    calendarDiv.append(cell);
+  }
+}
+
+// 18) Handle Date Click
+function handleDateClick(dateStr) {
+  selectedDate = dateStr;
+  selectedDateH3.textContent = new Date(dateStr).toLocaleDateString("de-DE", {
+    day:"2-digit",month:"2-digit",year:"numeric"
+  });
+  dateSelDiv.classList.remove("hidden");
+  loadDateSelection(dateStr);
+  updateUsage({ lastDateViewed: dateStr });
+}
+
+// 19) Load Date Selection
+function loadDateSelection(dateStr) {
+  const doc = selections.find(s => s.id === dateStr);
+  const checked = doc ? doc.categories : [];
+  dateForm.querySelectorAll('input[name="date-category"]').forEach(cb => {
+    cb.checked = checked.includes(cb.value);
   });
 }
 
-// --- Render Monats-Kalender ---
-function renderCalendar(){
-  monthLabel.textContent = 
-    new Date(viewYear,viewMonth).toLocaleString("de-DE",{month:"long",year:"numeric"});
-  calBody.innerHTML="";
-  // erster Tag Mo-index
-  const first = new Date(viewYear,viewMonth,1);
-  const startOffset = (first.getDay()+6)%7;
-  // Tage im Monat
-  const daysInMonth = new Date(viewYear,viewMonth+1,0).getDate();
-  let row = document.createElement("tr");
-  // Anfangs‑Leerräume
-  for(let i=0;i<startOffset;i++){
-    const td = document.createElement("td");
-    td.classList.add("inactive");
-    row.append(td);
-  }
-  for(let d=1;d<=daysInMonth;d++){
-    if(row.children.length===7){
-      calBody.append(row);
-      row=document.createElement("tr");
-    }
-    const td = document.createElement("td");
-    td.textContent = d;
-    td.dataset.date = `${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
-    td.addEventListener("click",onCalendarDateClick);
-    row.append(td);
-  }
-  // restliche Zellen
-  while(row.children.length<7){
-    const td=document.createElement("td"); td.classList.add("inactive"); row.append(td);
-  }
-  calBody.append(row);
-}
-
-// --- Klick auf Kalender-Datum ---
-function onCalendarDateClick(e){
-  const date = e.currentTarget.dataset.date;
-  dlgDateLabel.textContent = date;
-  // markiere Auswahl
-  renderCategories();
-  // setze Checkboxen nach Firestore‑Einträgen
-  const entry = tlEntries.find(x=>x.date.toDate().toISOString().slice(0,10)===date);
-  tlCategories.forEach(cat=>{
-    const cb = document.getElementById(`chk-${cat.id}`);
-    cb.checked = entry?.categoryIds?.includes(cat.id)||false;
+// 20) Render Timeline
+function renderTimeline() {
+  timelineDiv.innerHTML = "";
+  // Gruppen nach Woche (Mo–So)
+  const weeks = {};
+  selections.forEach(s => {
+    const d = new Date(s.id);
+    // nur selektionen mit ≥1 Kategorie
+    if (!s.categories?.length) return;
+    let wday = d.getDay(); // 0=So
+    let monday = new Date(d);
+    const diff = (wday === 0 ? -6 : 1 - wday);
+    monday.setDate(d.getDate() + diff);
+    const key = monday.toISOString().slice(0,10);
+    if (!weeks[key]) weeks[key] = [];
+    weeks[key].push(s);
   });
-  dialog.classList.remove("hidden");
-  // Speichern beim Ändern
-  dlgList.querySelectorAll("input[type=checkbox]").forEach(cb=>{
-    cb.onchange = async ()=>{
-      // ermittle alle checked
-      const sel = Array.from(dlgList.querySelectorAll("input"))
-        .filter(i=>i.checked)
-        .map(i=> i.id.replace("chk-",""));
-      const docId = date; // nutze Datum als ID
-      const ref = doc(db,"timeline_entries",docId);
-      if(sel.length){
-        await setDoc(ref,{
-          date: Timestamp.fromDate(new Date(date)),
-          categoryIds: sel,
-          updatedAt: serverTimestamp(),
-          createdBy: auth.currentUser.uid
-        },{merge:true});
-      } else {
-        // lösche falls keine Auswahl
-        deleteDoc(ref);
-      }
-    };
-  });
-}
-
-// dialog schließen
-dlgClose.addEventListener("click",()=>dialog.classList.add("hidden"));
-
-// --- Render Wochen-Stränge ---
-function renderStrands(){
-  strandsDiv.innerHTML="";
-  if(!tlEntries.length) return;
-  // gruppiere nach ISO-Woche-Jahr
-  const byWeek = {};
-  tlEntries.forEach(ent=>{
-    const d = ent.date.toDate();
-    // ISO week
-    const temp = new Date(d.getFullYear(),d.getMonth(),d.getDate()+4-(d.getDay()||7));
-    const weekNo = Math.ceil((((temp - new Date(temp.getFullYear(),0,1)) / 86400000)+1)/7);
-    const key = `${temp.getFullYear()}-W${weekNo}`;
-    byWeek[key] = byWeek[key]||{year:temp.getFullYear(),week:weekNo,entries:{}};
-    byWeek[key].entries[d.toISOString().slice(0,10)] = ent.categoryIds;
-  });
-  Object.values(byWeek).forEach(week=>{
-    const div = document.createElement("div");
-    div.className = "week-strand";
-    // finde Montag dieser Woche
-    const mon = new Date(week.year,0,1 + (week.week-1)*7);
-    while(mon.getDay() !== 1) mon.setDate(mon.getDate()-1);
+  // sortierte Wochenschlüssel
+  Object.keys(weeks).sort().forEach(weekKey => {
+    const monday = new Date(weekKey);
+    const container = document.createElement("div");
+    container.classList.add("week-container");
     for(let i=0;i<7;i++){
-      const day = new Date(mon); day.setDate(mon.getDate()+i);
-      const iso = day.toISOString().slice(0,10);
+      const day = new Date(monday);
+      day.setDate(monday.getDate()+i);
+      const ds = day.toISOString().slice(0,10);
       const seg = document.createElement("div");
-      seg.className = "day-segment";
-      const cats = week.entries[iso]||[];
-      if(cats.length){
-        // falls mehrere, mische Farben – hier: nehme erste
-        const col = tlCategories.find(c=>c.id===cats[0])?.color;
-        seg.style.background = col||"#888";
+      seg.classList.add("day-segment");
+      // finde selection
+      const sel = weeks[weekKey].find(x=>x.id===ds);
+      if (sel) {
+        const cid = sel.categories[0];
+        const cat = categories.find(c=>c.id===cid);
+        if (cat) seg.style.backgroundColor = cat.color;
       }
-      div.append(seg);
+      container.append(seg);
     }
-    strandsDiv.append(div);
+    timelineDiv.append(container);
   });
 }
 
-// initial render
-renderCalendar();
+// 21) Render Packliste
+function renderPacklist() {
+  packListUl.innerHTML = "";
+  categories.concat([{id:null,name:"Ohne Kategorie",color:"#888"}]).forEach(cat=>{
+    const hdr = document.createElement("li");
+    hdr.textContent = cat.name;
+    hdr.classList.add("category-header");
+    packListUl.append(hdr);
+    items.filter(i=>(i.categoryId||null)===cat.id).forEach(i=>{
+      const li = document.createElement("li");
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.checked = i.done;
+      cb.addEventListener("change",()=>{
+        updateDoc(doc(db,"packlist_items",i.id),{done:cb.checked,updatedAt:serverTimestamp()});
+      });
+      const span = document.createElement("span");
+      span.textContent = i.text;
+      span.contentEditable = true;
+      span.classList.add("packlist-text");
+      if(i.done) span.classList.add("completed");
+      span.addEventListener("blur",()=>{
+        const t = span.textContent.trim();
+        if(t && t!==i.text){
+          updateDoc(doc(db,"packlist_items",i.id),{text:t,updatedAt:serverTimestamp()});
+        } else {
+          span.textContent = i.text;
+        }
+      });
+      const del = document.createElement("button");
+      del.textContent = "🗑";
+      del.addEventListener("click",()=>{
+        deleteDoc(doc(db,"packlist_items",i.id));
+      });
+      li.append(cb,span,del);
+      packListUl.append(li);
+    });
+  });
+}
