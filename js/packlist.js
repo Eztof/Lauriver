@@ -1,31 +1,35 @@
 import { auth, firestore } from "./firebase-config.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
 import {
-  collection, doc, addDoc, getDocs, onSnapshot,
+  collection, doc, addDoc, onSnapshot,
   updateDoc, deleteDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
-const overview    = document.getElementById('overview');
-const detail      = document.getElementById('detail');
-const listsEl     = document.getElementById('lists');
-const itemsEl     = document.getElementById('items');
-const btnNewList  = document.getElementById('btn-new-list');
-const btnBack     = document.getElementById('btn-back');
-const btnClose    = document.getElementById('btn-close');
-const btnAddItem  = document.getElementById('btn-add-item');
-const btnDelete   = document.getElementById('btn-delete-list');
-const titleEl     = document.getElementById('list-title');
+// DOM
+const overview   = document.getElementById('overview');
+const detail     = document.getElementById('detail');
+const listsEl    = document.getElementById('lists');
+const itemsEl    = document.getElementById('items');
+const formNewList = document.getElementById('form-new-list');
+const inputNewList = document.getElementById('input-new-list');
+const formNewItem = document.getElementById('form-new-item');
+const inputNewItem = document.getElementById('input-new-item');
+const inputNewQty = document.getElementById('input-new-qty');
+const btnBackDetail = document.getElementById('btn-back-detail');
+const btnBackOverview = document.getElementById('btn-back-overview');
+const btnDeleteList = document.getElementById('btn-delete-list');
+const titleDetail = document.getElementById('title-detail');
 
 let currentListId;
 
-// Auth-Check
+// Auth & Redirect
 onAuthStateChanged(auth, user => {
   if (!user) return window.location.href = 'index.html';
-  loadLists();
+  bindListOverview();
 });
 
-// Listen laden (global)
-function loadLists() {
+// Übersicht binden
+function bindListOverview() {
   const col = collection(firestore, 'lists');
   onSnapshot(col, snap => {
     listsEl.innerHTML = '';
@@ -33,104 +37,111 @@ function loadLists() {
       const { title } = docSnap.data();
       const li = document.createElement('li');
       li.textContent = title;
-      li.addEventListener('click', () => openList(docSnap.id, title));
-      listsEl.appendChild(li);
+      li.addEventListener('click', () => openDetail(docSnap.id, title));
+      listsEl.append(li);
     });
   });
 }
 
-// Neue Liste
-btnNewList.addEventListener('click', async () => {
-  const title = prompt('Titel der neuen Liste:');
+// Neue Liste anlegen
+formNewList.addEventListener('submit', async e => {
+  e.preventDefault();
+  const title = inputNewList.value.trim();
   if (!title) return;
   await addDoc(collection(firestore, 'lists'), {
     title,
     createdBy: auth.currentUser.uid,
     createdAt: serverTimestamp()
   });
+  inputNewList.value = '';
 });
 
-// Liste öffnen
-function openList(id, title) {
+// Detail öffnen
+function openDetail(id, title) {
   currentListId = id;
-  titleEl.textContent = title;
+  titleDetail.textContent = title;
   overview.classList.add('hidden');
   detail.classList.remove('hidden');
-  loadItems();
+  btnBackOverview.classList.remove('hidden');
+  bindItems();
 }
 
-// Items laden
-function loadItems() {
+// Items binden
+function bindItems() {
   const col = collection(firestore, 'lists', currentListId, 'items');
   onSnapshot(col, snap => {
     itemsEl.innerHTML = '';
     snap.forEach(docSnap => {
-      const { text, quantity=1, done } = docSnap.data();
+      const { text, quantity, done } = docSnap.data();
       const li = document.createElement('li');
-      li.className = done ? 'done' : '';
-      const left = document.createElement('span');
-      left.textContent = `${text} ×${quantity}`;
-      const actions = document.createElement('div');
-      actions.className = 'actions';
-
-      // Check/Uncheck
-      const chk = document.createElement('button');
-      chk.textContent = done ? '☑' : '☐';
-      chk.addEventListener('click', async () => {
+      li.classList.toggle('done', done);
+      const label = document.createElement('label');
+      label.innerHTML = `
+        <input type="checkbox" ${done ? 'checked' : ''}>
+        <span>${text} (${quantity})</span>
+      `;
+      // Toggle
+      label.querySelector('input').addEventListener('change', async () => {
         await updateDoc(doc(col, docSnap.id), { done: !done });
       });
-      // Edit
-      const edt = document.createElement('button');
-      edt.textContent = '✎';
-      edt.addEventListener('click', async () => {
-        const newText = prompt('Text ändern:', text);
-        const newQty  = parseInt(prompt('Anzahl:', quantity),10) || quantity;
-        await updateDoc(doc(col, docSnap.id), {
-          text: newText||text,
-          quantity: newQty
-        });
+      // Kontextmenü zum Bearbeiten/Löschen
+      li.append(label);
+      li.addEventListener('contextmenu', e => {
+        e.preventDefault();
+        editOrDeleteItem(docSnap.id, text, quantity);
       });
-      // Delete
-      const del = document.createElement('button');
-      del.textContent = '🗑';
-      del.addEventListener('click', async () => {
-        if (confirm('Eintrag löschen?')) {
-          await deleteDoc(doc(col, docSnap.id));
-        }
-      });
-
-      [chk, edt, del].forEach(b=>actions.appendChild(b));
-      li.append(left, actions);
-      itemsEl.appendChild(li);
+      itemsEl.append(li);
     });
   });
 }
 
-// Item hinzufügen
-btnAddItem.addEventListener('click', async () => {
-  const text = prompt('Neuer Eintrag:');
-  const qty  = parseInt(prompt('Anzahl:'),10) || 1;
+// Neues Item
+formNewItem.addEventListener('submit', async e => {
+  e.preventDefault();
+  const text = inputNewItem.value.trim();
+  const qty  = parseInt(inputNewQty.value, 10) || 1;
   if (!text) return;
   await addDoc(collection(firestore, 'lists', currentListId, 'items'), {
-    text,
-    quantity: qty,
-    done: false,
+    text, quantity: qty, done: false,
     createdBy: auth.currentUser.uid,
     createdAt: serverTimestamp()
   });
+  inputNewItem.value = '';
+  inputNewQty.value = '1';
+});
+
+// Bearbeiten oder Löschen
+async function editOrDeleteItem(itemId, oldText, oldQty) {
+  const newText = prompt('Eintrag bearbeiten:', oldText);
+  if (newText === null) return; // abbrechen
+  const newQty = parseInt(prompt('Anzahl:', oldQty), 10) || oldQty;
+  if (newText.trim() === '') {
+    // löschen, wenn leer
+    await deleteDoc(doc(firestore, 'lists', currentListId, 'items', itemId));
+  } else {
+    // updaten
+    await updateDoc(doc(firestore, 'lists', currentListId, 'items', itemId), {
+      text: newText, quantity: newQty
+    });
+  }
+}
+
+// Zurück‑Buttons
+btnBackDetail.addEventListener('click', () => {
+  detail.classList.add('hidden');
+  overview.classList.remove('hidden');
+});
+btnBackOverview.addEventListener('click', () => {
+  detail.classList.add('hidden');
+  overview.classList.remove('hidden');
+  btnBackOverview.classList.add('hidden');
 });
 
 // Liste löschen
-btnDelete.addEventListener('click', async () => {
-  if (!confirm('Liste löschen?')) return;
-  await deleteDoc(doc(firestore, 'lists', currentListId));
-  detail.classList.add('hidden');
-  overview.classList.remove('hidden');
-});
-
-// Navigation zurück
-btnBack.addEventListener('click', () => window.location.href = 'index.html');
-btnClose.addEventListener('click', () => {
-  detail.classList.add('hidden');
-  overview.classList.remove('hidden');
+btnDeleteList.addEventListener('click', async () => {
+  if (confirm('Liste wirklich löschen?')) {
+    await deleteDoc(doc(firestore, 'lists', currentListId));
+    detail.classList.add('hidden');
+    overview.classList.remove('hidden');
+  }
 });

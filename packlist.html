@@ -8,26 +8,40 @@
 </head>
 <body>
   <div class="container">
-    <!-- Listen-Übersicht -->
-    <section id="overview">
+
+    <!-- ÜBERSICHT -->
+    <section id="overview" class="pack-section">
       <header class="header">
-        <button id="btn-back" class="btn secondary">Zurück</button>
+        <button id="btn-back-overview" class="btn secondary hidden">Zurück</button>
         <h1>Packlisten</h1>
-        <button id="btn-new-list" class="btn primary">+ Liste</button>
       </header>
+
       <ul id="lists" class="card-list"></ul>
+
+      <form id="form-new-list" class="inline-form">
+        <input id="input-new-list" type="text" placeholder="Neue Liste anlegen…" required>
+        <button type="submit" class="btn primary">Anlegen</button>
+      </form>
     </section>
 
-    <!-- Detail einer Liste -->
-    <section id="detail" class="hidden">
+    <!-- DETAILANSICHT -->
+    <section id="detail" class="pack-section hidden">
       <header class="header">
-        <button id="btn-close" class="btn secondary">Zurück</button>
-        <h1 id="list-title"></h1>
-        <button id="btn-add-item" class="btn primary">+ Eintrag</button>
+        <button id="btn-back-detail" class="btn secondary">Zurück</button>
+        <h1 id="title-detail">Titel</h1>
       </header>
+
       <ul id="items" class="card-list"></ul>
+
+      <form id="form-new-item" class="inline-form">
+        <input id="input-new-item" type="text" placeholder="Neuen Eintrag hinzufügen…" required>
+        <input id="input-new-qty" type="number" min="1" value="1">
+        <button type="submit" class="btn primary">Hinzufügen</button>
+      </form>
+
       <button id="btn-delete-list" class="btn danger block">Liste löschen</button>
     </section>
+
   </div>
 
   <script type="module" src="js/firebase-config.js"></script>
