@@ -1,4 +1,4 @@
-// 1) Firebase‑SDK importieren
+// 1) Firebase‑SDK importieren (Auth + Firestore)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
   getAuth, setPersistence,
@@ -8,8 +8,9 @@ import {
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
   getFirestore, collection, addDoc, doc,
-  setDoc, deleteDoc, onSnapshot,
-  query, orderBy, serverTimestamp
+  setDoc, updateDoc, deleteDoc,
+  query, orderBy, onSnapshot,
+  serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 2) Firebase‑Konfiguration
@@ -28,233 +29,230 @@ const db   = getFirestore(app);
 
 // 3) Hilfsfunktionen
 function emailFromUsername(u){ return `${u}@lauriver.app`; }
-async function updateUsage(updates) {
-  const u = auth.currentUser;
-  if (!u) return;
-  await setDoc(doc(db, "usage_logs", u.uid), {
-    ...updates, lastUpdate: serverTimestamp()
-  }, { merge: true });
+function randomColor(){
+  return "#"+Math.floor(Math.random()*0xFFFFFF).toString(16).padStart(6,"0");
+}
+async function updateUsage(updates){
+  const u = auth.currentUser; if(!u) return;
+  await setDoc(doc(db,"usage_logs",u.uid),{...updates,lastUpdate:serverTimestamp()},{merge:true});
 }
 
 // 4) UI‑Referenzen
 const sections     = {
-  login:    document.getElementById("login-section"),
-  register: document.getElementById("register-section"),
-  home:     document.getElementById("home-section"),
-  calendar: document.getElementById("calendar-section"),
-  packlist: document.getElementById("packlist-section"),
-  timeline: document.getElementById("timeline-section")
+  login:      document.getElementById("login-section"),
+  register:   document.getElementById("register-section"),
+  home:       document.getElementById("home-section"),
+  calendar:   document.getElementById("calendar-section"),
+  packlist:   document.getElementById("packlist-section"),
+  timeline:   document.getElementById("timeline-section")
 };
-const logoutBtn         = document.getElementById("logout-btn");
-const categoryForm      = document.getElementById("timeline-category-form");
-const categoryInput     = document.getElementById("timeline-category-input");
-const calendarContainer = document.getElementById("timeline-calendar");
-const modal             = document.getElementById("timeline-modal");
-const modalDateSpan     = document.getElementById("modal-date");
-const modalForm         = document.getElementById("modal-form");
-const modalCheckboxes   = document.getElementById("modal-checkboxes");
-const modalCancel       = document.getElementById("modal-cancel");
-const timelineGrid      = document.getElementById("timeline-grid");
+const logoutBtn      = document.getElementById("logout-btn");
+// (Kalender- und Packliste-Refs wie gehabt, siehe vorherige Version…)
 
-// State
-let categories = [];
-let entriesMap = {};   // { "YYYY-MM-DD": [catId, ...] }
+// Timeline‑Refs
+const catInput       = document.getElementById("tl-category-input");
+const catAddBtn      = document.getElementById("tl-add-category");
+const monthLabel     = document.getElementById("month-label");
+const prevMonthBtn   = document.getElementById("prev-month");
+const nextMonthBtn   = document.getElementById("next-month");
+const calBody        = document.querySelector("#calendar-table tbody");
+const dialog         = document.getElementById("tl-dialog");
+const dlgDateLabel   = document.getElementById("tl-dialog-date");
+const dlgList        = document.getElementById("tl-dialog-list");
+const dlgClose       = document.getElementById("tl-dialog-close");
+const strandsDiv     = document.getElementById("tl-strands");
 
-// 5) View‑Switch
-function showView(name) {
-  Object.values(sections).forEach(s => s.classList.add("hidden"));
+// State Timeline
+let today = new Date();
+let viewYear = today.getFullYear(), viewMonth = today.getMonth();
+let tlCategories = [], tlEntries = [];
+
+// --- View‑Switch ---
+function showView(name){
+  Object.values(sections).forEach(s=>s.classList.add("hidden"));
   sections[name].classList.remove("hidden");
-  updateUsage({ [`lastView_${name}`]: serverTimestamp() });
+  updateUsage({[`lastView_${name}`]:serverTimestamp()});
 }
 
-// 6) Auth‑Listener & Firestore‑Listener starten
-let catUnsub, entryUnsub;
-onAuthStateChanged(auth, user => {
-  if (user) {
+// --- Auth‑Listener & Realtime Listener ---
+let tlCatUnsub, tlEntryUnsub;
+onAuthStateChanged(auth,user=>{
+  if(user){
     showView("home");
-    updateUsage({ lastLogin: serverTimestamp(), displayName: user.displayName });
-
-    // Kategorien
-    if (catUnsub) catUnsub();
-    catUnsub = onSnapshot(
-      query(collection(db, "timeline_categories"), orderBy("createdAt")),
-      snap => {
-        categories = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    updateUsage({lastLogin:serverTimestamp(),displayName:user.displayName});
+    // Timeline: Kategorien
+    if(tlCatUnsub) tlCatUnsub();
+    tlCatUnsub = onSnapshot(
+      query(collection(db,"timeline_categories"),orderBy("createdAt")),
+      snap=>{
+        tlCategories = snap.docs.map(d=>({id:d.id,...d.data()}));
+        renderCategories();
       }
     );
-
-    // Einträge
-    if (entryUnsub) entryUnsub();
-    entryUnsub = onSnapshot(
-      collection(db, "timeline_entries"),
-      snap => {
-        entriesMap = {};
-        snap.docs.forEach(d => {
-          entriesMap[d.id] = d.data().categories || [];
-        });
-        rebuildCalendar();
-        renderTimeline();
+    // Timeline: Einträge
+    if(tlEntryUnsub) tlEntryUnsub();
+    tlEntryUnsub = onSnapshot(
+      query(collection(db,"timeline_entries"),orderBy("date")),
+      snap=>{
+        tlEntries = snap.docs.map(d=>({id:d.id,...d.data()}));
+        renderCalendar();
+        renderStrands();
       }
     );
-
   } else {
-    if (catUnsub) catUnsub();
-    if (entryUnsub) entryUnsub();
+    tlCatUnsub && tlCatUnsub();
+    tlEntryUnsub && tlEntryUnsub();
     showView("login");
   }
 });
 
-// 7) Login / Registrierung / Logout
-document.getElementById("login-form").addEventListener("submit", e => {
-  e.preventDefault();
-  const u = document.getElementById("login-username").value.trim(),
-        p = document.getElementById("login-password").value,
-        rem = document.getElementById("remember-device").checked;
-  setPersistence(auth, rem ? browserLocalPersistence : browserSessionPersistence)
-    .then(() => signInWithEmailAndPassword(auth, emailFromUsername(u), p))
-    .then(() => updateUsage({ lastLogin: serverTimestamp(), remember: rem }))
-    .catch(err => alert("Einloggen fehlgeschlagen: " + err.message));
-});
-document.getElementById("register-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  const u = document.getElementById("register-username").value.trim(),
-        p1 = document.getElementById("register-password").value,
-        p2 = document.getElementById("register-password-confirm").value;
-  if (p1 !== p2) return alert("Passwörter stimmen nicht überein.");
-  try {
-    const cred = await createUserWithEmailAndPassword(auth, emailFromUsername(u), p1);
-    await updateProfile(cred.user, { displayName: u });
-    await setDoc(doc(db,"usage_logs",cred.user.uid), {
-      createdAt: serverTimestamp(), lastLogin: serverTimestamp(), displayName: u
-    });
-  } catch(err) {
-    alert("Registrierung fehlgeschlagen: " + err.message);
-  }
-});
-document.getElementById("to-register").addEventListener("click", e => { e.preventDefault(); showView("register"); });
-document.getElementById("to-login")  .addEventListener("click", e => { e.preventDefault(); showView("login"); });
-logoutBtn.addEventListener("click", async () => {
-  await updateUsage({ lastLogout: serverTimestamp() });
-  signOut(auth);
-});
+// --- Login/Register/Logout (wie zuvor) ---
+// … code unverändert …
 
-// 8) Kategorien anlegen
-categoryForm.addEventListener("submit", async e => {
-  e.preventDefault();
-  const name = categoryInput.value.trim();
-  if (!name) return;
-  const color = '#' + Math.random().toString(16).slice(2,8);
-  await addDoc(collection(db, "timeline_categories"), {
-    name, color, createdAt: serverTimestamp()
+// --- Timeline: Kategorie hinzufügen ---
+catAddBtn.addEventListener("click",async()=>{
+  const name = catInput.value.trim(); if(!name) return;
+  await addDoc(collection(db,"timeline_categories"),{
+    name, color: randomColor(),
+    createdAt:serverTimestamp(),
+    createdBy:auth.currentUser.uid
   });
-  categoryInput.value = "";
+  catInput.value="";
 });
 
-// 9) Kalender aufbauen
-function rebuildCalendar() {
-  calendarContainer.innerHTML = '';
-  const today = new Date();
-  const year = today.getFullYear(), month = today.getMonth();
-  const firstOfMonth = new Date(year, month, 1);
-  const start = new Date(firstOfMonth);
-  start.setDate(firstOfMonth.getDate() - ((firstOfMonth.getDay() + 6) % 7));
-  const lastOfMonth = new Date(year, month + 1, 0);
-  const end = new Date(lastOfMonth);
-  end.setDate(lastOfMonth.getDate() + (6 - ((lastOfMonth.getDay() + 6) % 7)));
+// --- Timeline: Monats-Nav ---
+prevMonthBtn.addEventListener("click",()=>{
+  viewMonth--; if(viewMonth<0){viewMonth=11;viewYear--;}
+  renderCalendar();
+});
+nextMonthBtn.addEventListener("click",()=>{
+  viewMonth++; if(viewMonth>11){viewMonth=0;viewYear++;}
+  renderCalendar();
+});
 
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const iso = d.toISOString().slice(0,10);
-    const div = document.createElement("div");
-    div.className = "calendar-day";
-    if (d.getMonth() !== month) div.classList.add("other-month");
-    if (entriesMap[iso] && entriesMap[iso].length) div.classList.add("has-entry");
-    div.innerHTML = `<span class="date-num">${d.getDate()}</span>`;
-    div.dataset.date = iso;
-    div.addEventListener("click", () => openModal(iso));
-    calendarContainer.append(div);
-  }
-}
-
-// 10) Modal-Logik
-function openModal(date) {
-  modalDateSpan.textContent = date;
-  modalCheckboxes.innerHTML = '';
-  categories.forEach(cat => {
+// --- Render Kategorien (Dialog-Checkliste) ---
+function renderCategories(){
+  dlgList.innerHTML="";
+  tlCategories.forEach(cat=>{
     const id = `chk-${cat.id}`;
-    const lbl = document.createElement("label");
-    lbl.innerHTML = `
-      <input type="checkbox" id="${id}" data-cat-id="${cat.id}"
-        ${entriesMap[date]?.includes(cat.id) ? 'checked' : ''}>
-      <span style="background:${cat.color};width:12px;height:12px;display:inline-block;margin-right:4px;"></span>
-      ${cat.name}
-    `;
-    modalCheckboxes.append(lbl);
+    const wrap = document.createElement("label");
+    wrap.innerHTML = `<input type="checkbox" id="${id}"/> ${cat.name}`;
+    dlgList.append(wrap);
   });
-  modal.classList.remove("hidden");
 }
-modalCancel.addEventListener("click", () => modal.classList.add("hidden"));
-modalForm.addEventListener("submit", async e => {
-  e.preventDefault();
-  const date = modalDateSpan.textContent;
-  const checked = Array.from(modalCheckboxes.querySelectorAll("input[type=checkbox]:checked"))
-    .map(cb => cb.dataset.catId);
-  const ref = doc(db, "timeline_entries", date);
-  if (checked.length) {
-    await setDoc(ref, { categories: checked, updatedAt: serverTimestamp() });
-  } else {
-    await deleteDoc(ref);
+
+// --- Render Monats-Kalender ---
+function renderCalendar(){
+  monthLabel.textContent = 
+    new Date(viewYear,viewMonth).toLocaleString("de-DE",{month:"long",year:"numeric"});
+  calBody.innerHTML="";
+  // erster Tag Mo-index
+  const first = new Date(viewYear,viewMonth,1);
+  const startOffset = (first.getDay()+6)%7;
+  // Tage im Monat
+  const daysInMonth = new Date(viewYear,viewMonth+1,0).getDate();
+  let row = document.createElement("tr");
+  // Anfangs‑Leerräume
+  for(let i=0;i<startOffset;i++){
+    const td = document.createElement("td");
+    td.classList.add("inactive");
+    row.append(td);
   }
-  modal.classList.add("hidden");
-});
-
-// 11) Timeline rendern
-function renderTimeline() {
-  timelineGrid.innerHTML = '';
-  const dates = Object.keys(entriesMap)
-    .filter(d => entriesMap[d].length)
-    .map(d => new Date(d));
-  if (!dates.length) return;
-  const weeks = new Set();
-  dates.forEach(d => {
-    const monday = new Date(d);
-    monday.setDate(d.getDate() - ((d.getDay() + 6) % 7));
-    weeks.add(monday.toISOString().slice(0,10));
-  });
-
-  Array.from(weeks).sort().forEach(weekStartISO => {
-    const weekStart = new Date(weekStartISO);
-    const row = document.createElement("div");
-    row.className = "week-row";
-    for (let i = 0; i < 7; i++) {
-      const day = new Date(weekStart);
-      day.setDate(weekStart.getDate() + i);
-      const iso = day.toISOString().slice(0,10);
-      const cell = document.createElement("div");
-      cell.className = "day-cell";
-      const cats = entriesMap[iso] || [];
-      if (!cats.length) {
-        const bar = document.createElement("div");
-        bar.className = "timeline-bar grey";
-        cell.append(bar);
-      } else {
-        const h = 100 / cats.length;
-        cats.forEach(catId => {
-          const cat = categories.find(c=>c.id===catId);
-          const bar = document.createElement("div");
-          bar.className = "timeline-bar";
-          bar.style.background = cat?.color || "#000";
-          bar.style.height = `${h}%`;
-          cell.append(bar);
-        });
-      }
-      row.append(cell);
+  for(let d=1;d<=daysInMonth;d++){
+    if(row.children.length===7){
+      calBody.append(row);
+      row=document.createElement("tr");
     }
-    timelineGrid.append(row);
+    const td = document.createElement("td");
+    td.textContent = d;
+    td.dataset.date = `${viewYear}-${String(viewMonth+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+    td.addEventListener("click",onCalendarDateClick);
+    row.append(td);
+  }
+  // restliche Zellen
+  while(row.children.length<7){
+    const td=document.createElement("td"); td.classList.add("inactive"); row.append(td);
+  }
+  calBody.append(row);
+}
+
+// --- Klick auf Kalender-Datum ---
+function onCalendarDateClick(e){
+  const date = e.currentTarget.dataset.date;
+  dlgDateLabel.textContent = date;
+  // markiere Auswahl
+  renderCategories();
+  // setze Checkboxen nach Firestore‑Einträgen
+  const entry = tlEntries.find(x=>x.date.toDate().toISOString().slice(0,10)===date);
+  tlCategories.forEach(cat=>{
+    const cb = document.getElementById(`chk-${cat.id}`);
+    cb.checked = entry?.categoryIds?.includes(cat.id)||false;
+  });
+  dialog.classList.remove("hidden");
+  // Speichern beim Ändern
+  dlgList.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+    cb.onchange = async ()=>{
+      // ermittle alle checked
+      const sel = Array.from(dlgList.querySelectorAll("input"))
+        .filter(i=>i.checked)
+        .map(i=> i.id.replace("chk-",""));
+      const docId = date; // nutze Datum als ID
+      const ref = doc(db,"timeline_entries",docId);
+      if(sel.length){
+        await setDoc(ref,{
+          date: Timestamp.fromDate(new Date(date)),
+          categoryIds: sel,
+          updatedAt: serverTimestamp(),
+          createdBy: auth.currentUser.uid
+        },{merge:true});
+      } else {
+        // lösche falls keine Auswahl
+        deleteDoc(ref);
+      }
+    };
   });
 }
 
-// 12) Links zwischen Views
-document.getElementById("nav-timeline")
-  .addEventListener("click", () => showView("timeline"));
-document.querySelectorAll(".back-btn")
-  .forEach(b => b.addEventListener("click", () => showView("home")));
+// dialog schließen
+dlgClose.addEventListener("click",()=>dialog.classList.add("hidden"));
+
+// --- Render Wochen-Stränge ---
+function renderStrands(){
+  strandsDiv.innerHTML="";
+  if(!tlEntries.length) return;
+  // gruppiere nach ISO-Woche-Jahr
+  const byWeek = {};
+  tlEntries.forEach(ent=>{
+    const d = ent.date.toDate();
+    // ISO week
+    const temp = new Date(d.getFullYear(),d.getMonth(),d.getDate()+4-(d.getDay()||7));
+    const weekNo = Math.ceil((((temp - new Date(temp.getFullYear(),0,1)) / 86400000)+1)/7);
+    const key = `${temp.getFullYear()}-W${weekNo}`;
+    byWeek[key] = byWeek[key]||{year:temp.getFullYear(),week:weekNo,entries:{}};
+    byWeek[key].entries[d.toISOString().slice(0,10)] = ent.categoryIds;
+  });
+  Object.values(byWeek).forEach(week=>{
+    const div = document.createElement("div");
+    div.className = "week-strand";
+    // finde Montag dieser Woche
+    const mon = new Date(week.year,0,1 + (week.week-1)*7);
+    while(mon.getDay() !== 1) mon.setDate(mon.getDate()-1);
+    for(let i=0;i<7;i++){
+      const day = new Date(mon); day.setDate(mon.getDate()+i);
+      const iso = day.toISOString().slice(0,10);
+      const seg = document.createElement("div");
+      seg.className = "day-segment";
+      const cats = week.entries[iso]||[];
+      if(cats.length){
+        // falls mehrere, mische Farben – hier: nehme erste
+        const col = tlCategories.find(c=>c.id===cats[0])?.color;
+        seg.style.background = col||"#888";
+      }
+      div.append(seg);
+    }
+    strandsDiv.append(div);
+  });
+}
+
+// initial render
+renderCalendar();

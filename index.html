@@ -47,18 +47,35 @@
       </nav>
     </section>
 
-    <!-- KALENDER (Platzhalter, hier kann dein bestehender Code stehen) -->
+    <!-- KALENDER -->
     <section id="calendar-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Kalender</h2>
-      <!-- Dein Kalender-Code -->
+      <form id="event-form">
+        <input type="text" id="event-title" placeholder="Titel" required>
+        <input type="date" id="event-date" required>
+        <input type="time" id="event-time" required>
+        <button type="submit">Event hinzufügen</button>
+      </form>
+      <ul id="event-list"></ul>
     </section>
 
-    <!-- PACKLISTE (Platzhalter, hier kann dein bestehender Code stehen) -->
+    <!-- PACKLISTE -->
     <section id="packlist-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Packliste</h2>
-      <!-- Dein Packlisten-Code -->
+      <form id="category-form">
+        <input type="text" id="category-input" placeholder="Neue Kategorie hinzufügen" required>
+        <button type="submit">Kategorie erstellen</button>
+      </form>
+      <form id="packlist-form">
+        <input type="text" id="packlist-input" placeholder="Item hinzufügen" required>
+        <select id="category-select">
+          <option value="">– Keine Kategorie –</option>
+        </select>
+        <button type="submit">Hinzufügen</button>
+      </form>
+      <ul id="packlist-items"></ul>
     </section>
 
     <!-- ZEITSTRANG -->
@@ -66,31 +83,36 @@
       <button class="back-btn">← Zurück</button>
       <h2>Zeitstrang</h2>
 
-      <!-- Kategorie hinzufügen -->
-      <form id="timeline-category-form">
-        <input type="text" id="timeline-category-input" placeholder="Neue Kategorie" required>
-        <button type="submit">Hinzufügen</button>
-      </form>
-
-      <!-- Interaktiver Kalender -->
-      <div id="timeline-calendar"></div>
-
-      <!-- Modal für Tages‑Einträge -->
-      <div id="timeline-modal" class="hidden">
-        <div id="modal-content">
-          <h3>Einträge für <span id="modal-date"></span></h3>
-          <form id="modal-form">
-            <div id="modal-checkboxes"></div>
-            <div class="modal-buttons">
-              <button type="submit">Speichern</button>
-              <button type="button" id="modal-cancel">Abbrechen</button>
-            </div>
-          </form>
-        </div>
+      <!-- Kategorien verwalten -->
+      <div id="tl-categories">
+        <input type="text" id="tl-category-input" placeholder="Neue Kategorie" />
+        <button id="tl-add-category">Hinzufügen</button>
       </div>
 
-      <!-- Wöchentliche Zeitstrahlen -->
-      <div id="timeline-grid"></div>
+      <!-- Monats-Kalender -->
+      <div id="tl-calendar">
+        <button id="prev-month">«</button>
+        <span id="month-label"></span>
+        <button id="next-month">»</button>
+        <table id="calendar-table">
+          <thead>
+            <tr>
+              <th>Mo</th><th>Di</th><th>Mi</th><th>Do</th><th>Fr</th><th>Sa</th><th>So</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <!-- Checkbox-Dialog -->
+      <div id="tl-dialog" class="hidden">
+        <h3 id="tl-dialog-date"></h3>
+        <div id="tl-dialog-list"></div>
+        <button id="tl-dialog-close">Schließen</button>
+      </div>
+
+      <!-- Wochen-Stränge -->
+      <div id="tl-strands"></div>
     </section>
   </main>
 </body>
