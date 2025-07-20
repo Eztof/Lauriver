@@ -1,9 +1,29 @@
-// Elemente
+// Imports from your config and Firebase SDK
+import { auth, firestore } from "./firebase-config.js";
+import {
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+// Elements
 const regSection   = document.getElementById('register-section');
 const loginSection = document.getElementById('login-section');
 const dashSection  = document.getElementById('dashboard');
+const formRegister = document.getElementById('form-register');
+const formLogin    = document.getElementById('form-login');
 
-// Umschalten Login/Register
+// Switch between forms
 document.getElementById('show-register').addEventListener('click', e => {
   e.preventDefault();
   loginSection.classList.add('hidden');
@@ -15,63 +35,70 @@ document.getElementById('show-login').addEventListener('click', e => {
   loginSection.classList.remove('hidden');
 });
 
-// Helper: Persistence
-function setPersistence(remember) {
+// Helper: choose persistence
+function applyPersistence(remember) {
   const mode = remember
-    ? firebase.auth.Auth.Persistence.LOCAL
-    : firebase.auth.Auth.Persistence.SESSION;
-  return auth.setPersistence(mode);
+    ? browserLocalPersistence
+    : browserSessionPersistence;
+  return setPersistence(auth, mode);
 }
 
-// Registrierung
-document.getElementById('btn-register').addEventListener('click', () => {
-  const u   = document.getElementById('reg-username').value.trim();
-  const p   = document.getElementById('reg-password').value;
-  const rem = document.getElementById('reg-remember').checked;
+// Registration handler
+formRegister.addEventListener('submit', async e => {
+  e.preventDefault();
+  const u   = formRegister['username'].value.trim();
+  const p   = formRegister['password'].value;
+  const rem = formRegister['reg-remember'].checked;
+
   if (!u || !p) return alert('Bitte Benutzername und Passwort eingeben.');
 
-  setPersistence(rem)
-    .then(() => auth.createUserWithEmailAndPassword(`${u}@lauriver.local`, p))
-    .then(cred => setupUserData(cred.user, u))
-    .catch(err => alert(err.message));
+  try {
+    await applyPersistence(rem);
+    const cred = await createUserWithEmailAndPassword(auth, `${u}@lauriver.local`, p);
+    await setupUserData(cred.user.uid, u);
+  } catch (err) {
+    alert(err.message);
+  }
 });
 
-// Login
-document.getElementById('btn-login').addEventListener('click', () => {
-  const u   = document.getElementById('login-username').value.trim();
-  const p   = document.getElementById('login-password').value;
-  const rem = document.getElementById('login-remember').checked;
+// Login handler
+formLogin.addEventListener('submit', async e => {
+  e.preventDefault();
+  const u   = formLogin['username'].value.trim();
+  const p   = formLogin['password'].value;
+  const rem = formLogin['login-remember'].checked;
+
   if (!u || !p) return alert('Bitte Benutzername und Passwort eingeben.');
 
-  setPersistence(rem)
-    .then(() => auth.signInWithEmailAndPassword(`${u}@lauriver.local`, p))
-    .catch(err => alert(err.message));
+  try {
+    await applyPersistence(rem);
+    await signInWithEmailAndPassword(auth, `${u}@lauriver.local`, p);
+  } catch (err) {
+    alert(err.message);
+  }
 });
 
-// User-Daten in Firestore anlegen oder updaten
-function setupUserData(user, username) {
-  const docRef = firestore.collection('users').doc(user.uid);
-  const now = Date.now();
+// Create or update user document in Firestore
+async function setupUserData(uid, username) {
+  const now    = Date.now();
+  const userDoc = doc(firestore, "users", uid);
+  const snap   = await getDoc(userDoc);
 
-  docRef.get().then(docSnap => {
-    if (!docSnap.exists) {
-      // Neu anlegen
-      docRef.set({
-        username,
-        createdAt: now,
-        lastLogin: now,
-        settings: {},
-        usage: {}
-      });
-    } else {
-      // Nur letztes Login updaten
-      docRef.update({ lastLogin: now });
-    }
-  });
+  if (!snap.exists()) {
+    await setDoc(userDoc, {
+      username,
+      createdAt: now,
+      lastLogin: now,
+      settings: {},
+      usage: {}
+    });
+  } else {
+    await updateDoc(userDoc, { lastLogin: now });
+  }
 }
 
-// Auth-State Listener
-auth.onAuthStateChanged(user => {
+// Auth state listener
+onAuthStateChanged(auth, user => {
   if (user) {
     loginSection.classList.add('hidden');
     regSection.classList.add('hidden');
@@ -85,5 +112,5 @@ auth.onAuthStateChanged(user => {
 
 // Logout
 document.getElementById('btn-logout').addEventListener('click', () => {
-  auth.signOut();
+  signOut(auth);
 });
