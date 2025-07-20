@@ -1,29 +1,16 @@
-// 1) Firebase‑SDK importieren (Auth + Firestore)
+// 1) Firebase‑SDK importieren
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
-  getAuth,
-  setPersistence,
-  browserLocalPersistence,
-  browserSessionPersistence,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged,
-  updateProfile,
-  signOut
+  getAuth, setPersistence,
+  browserLocalPersistence, browserSessionPersistence,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword,
+  onAuthStateChanged, updateProfile, signOut
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import {
-  getFirestore,
-  doc,
-  setDoc,
-  updateDoc,
-  deleteDoc,
-  collection,
-  addDoc,
-  query,
-  orderBy,
-  onSnapshot,
-  serverTimestamp,
-  Timestamp
+  getFirestore, collection, addDoc, doc,
+  query, orderBy, onSnapshot,
+  updateDoc, deleteDoc, setDoc,
+  serverTimestamp, Timestamp
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
 // 2) Firebase‑Konfiguration
@@ -40,7 +27,7 @@ const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db   = getFirestore(app);
 
-// 3) Hilfs‑Funktionen
+// 3) Hilfsfunktionen
 function emailFromUsername(u) {
   return `${u}@lauriver.app`;
 }
@@ -60,11 +47,15 @@ const sections     = {
   timeline:   document.getElementById("timeline-section")
 };
 const logoutBtn      = document.getElementById("logout-btn");
+
+// Kalender
 const eventForm      = document.getElementById("event-form");
 const eventTitle     = document.getElementById("event-title");
 const eventDate      = document.getElementById("event-date");
 const eventTime      = document.getElementById("event-time");
 const eventListUl    = document.getElementById("event-list");
+
+// Packliste
 const categoryForm   = document.getElementById("category-form");
 const categoryInput  = document.getElementById("category-input");
 const categorySelect = document.getElementById("category-select");
@@ -72,23 +63,30 @@ const packForm       = document.getElementById("packlist-form");
 const packInput      = document.getElementById("packlist-input");
 const packListUl     = document.getElementById("packlist-items");
 
-// 5) View‑Wechsel
+// Zeitstrang
+const timelineForm   = document.getElementById("timeline-form");
+const dateInput      = document.getElementById("timeline-date");
+const statusSelect   = document.getElementById("timeline-status");
+const grid           = document.getElementById("timeline-grid");
+const summaryList    = document.getElementById("summary-list");
+
+// 5) View‑Switch
 function showView(name) {
   Object.values(sections).forEach(s => s.classList.add("hidden"));
   sections[name].classList.remove("hidden");
   updateUsage({ [`lastView_${name}`]: serverTimestamp() });
 }
 
-// 6) Auth‑Listener & Real‑Time‑Listener starten
-let catUnsub, packUnsub, evtUnsub;
-let categories = [], items = [], events = [];
+// 6) Auth‑Listener & Realtime‑Listener starten
+let catUnsub, packUnsub, evtUnsub, timelineUnsub;
+let categories = [], items = [], events = [], entries = [];
 
 onAuthStateChanged(auth, user => {
   if (user) {
     showView("home");
     updateUsage({ lastLogin: serverTimestamp(), displayName: user.displayName });
 
-    // — Kategorien
+    // Kategorien
     if (catUnsub) catUnsub();
     catUnsub = onSnapshot(
       query(collection(db, "packlist_categories"), orderBy("createdAt")),
@@ -99,7 +97,7 @@ onAuthStateChanged(auth, user => {
       }
     );
 
-    // — Packliste
+    // Packliste
     if (packUnsub) packUnsub();
     packUnsub = onSnapshot(
       query(collection(db, "packlist_items"), orderBy("createdAt")),
@@ -109,7 +107,7 @@ onAuthStateChanged(auth, user => {
       }
     );
 
-    // — Kalender
+    // Kalender
     if (evtUnsub) evtUnsub();
     evtUnsub = onSnapshot(
       query(collection(db, "calendar_events"), orderBy("datetime")),
@@ -119,10 +117,19 @@ onAuthStateChanged(auth, user => {
       }
     );
 
+    // Zeitstrang
+    if (timelineUnsub) timelineUnsub();
+    timelineUnsub = onSnapshot(
+      query(collection(db, "timeline_entries"), orderBy("date")),
+      snap => {
+        entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderTimeline();
+        renderSummary();
+      }
+    );
+
   } else {
-    if (catUnsub) catUnsub();
-    if (packUnsub) packUnsub();
-    if (evtUnsub) evtUnsub();
+    [catUnsub, packUnsub, evtUnsub, timelineUnsub].forEach(u => u && u());
     showView("login");
   }
 });
@@ -206,7 +213,7 @@ packForm.addEventListener("submit", e => {
   packInput.value = "";
 });
 
-// 14) **Kalender: Neues Event**
+// 14) Kalender: Neues Event
 eventForm.addEventListener("submit", async e => {
   e.preventDefault();
   const title = eventTitle.value.trim();
@@ -225,7 +232,25 @@ eventForm.addEventListener("submit", async e => {
   eventTime.value = "";
 });
 
-// 15) Renderer Packliste
+// 15) Zeitstrang: Neue Entry
+timelineForm.addEventListener("submit", async e => {
+  e.preventDefault();
+  const d = dateInput.value, s = statusSelect.value;
+  if (!d || !s) return;
+  const dt = Timestamp.fromDate(new Date(d));
+  await addDoc(collection(db, "timeline_entries"), {
+    date: dt,
+    status: s,
+    createdAt: serverTimestamp(),
+    createdBy: auth.currentUser.uid
+  });
+  dateInput.value = "";
+  statusSelect.value = "";
+});
+
+// --- Renderer-Funktionen ---
+
+// Packliste
 function rebuildCategorySelect() {
   categorySelect.innerHTML = `<option value="">– Keine Kategorie –</option>` +
     categories.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
@@ -268,7 +293,7 @@ function renderPacklist() {
   });
 }
 
-// 16) **Renderer Kalender**
+// Kalender
 function renderCalendar() {
   eventListUl.innerHTML = "";
   let lastDate = null;
@@ -307,4 +332,42 @@ function renderCalendar() {
     li.append(spanTime, spanTitle, del);
     eventListUl.append(li);
   });
+}
+
+// Zeitstrang
+function renderTimeline() {
+  grid.innerHTML = "";
+  if (!entries.length) return;
+  const dates = entries.map(e => e.date.toDate());
+  const min = new Date(Math.min(...dates)), max = new Date(Math.max(...dates));
+  const first = new Date(min);
+  first.setDate(first.getDate() - ((first.getDay() + 6) % 7));
+  const last = new Date(max);
+  last.setDate(last.getDate() + (7 - ((last.getDay() + 6) % 7) - 1));
+  for (let wk = new Date(first); wk <= last; wk.setDate(wk.getDate() + 7)) {
+    const col = document.createElement("div");
+    col.className = "week-column";
+    for (let i = 0; i < 7; i++) {
+      const cellDate = new Date(wk);
+      cellDate.setDate(wk.getDate() + i);
+      const cell = document.createElement("div");
+      cell.className = "day-cell";
+      const iso = cellDate.toISOString().slice(0, 10);
+      cell.setAttribute("data-date", iso);
+      const ent = entries.find(e => e.date.toDate().toISOString().slice(0, 10) === iso);
+      if (ent) cell.classList.add(ent.status);
+      col.append(cell);
+    }
+    grid.append(col);
+  }
+}
+
+function renderSummary() {
+  const counts = { travel: 0, home: 0, none: 0 };
+  entries.forEach(e => counts[e.status]++);
+  summaryList.innerHTML = `
+    <li><span class="summary-color travel"></span>Reise: ${counts.travel} Tage</li>
+    <li><span class="summary-color home"></span>Zuhause: ${counts.home} Tage</li>
+    <li><span class="summary-color none"></span>Nicht gesehen: ${counts.none} Tage</li>
+  `;
 }

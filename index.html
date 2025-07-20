@@ -51,16 +51,12 @@
     <section id="calendar-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Kalender</h2>
-
-      <!-- Event hinzufügen -->
       <form id="event-form">
         <input type="text" id="event-title" placeholder="Titel" required>
         <input type="date" id="event-date" required>
         <input type="time" id="event-time" required>
         <button type="submit">Event hinzufügen</button>
       </form>
-
-      <!-- Liste der Events -->
       <ul id="event-list"></ul>
     </section>
 
@@ -86,7 +82,21 @@
     <section id="timeline-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Zeitstrang</h2>
-      <p>Hier kommt später dein Zeitstrang.</p>
+      <form id="timeline-form">
+        <input type="date" id="timeline-date" required>
+        <select id="timeline-status" required>
+          <option value="">— Status wählen —</option>
+          <option value="travel">Reise</option>
+          <option value="home">Zuhause</option>
+          <option value="none">Nicht gesehen</option>
+        </select>
+        <button type="submit">Eintragen</button>
+      </form>
+      <div id="timeline-grid"></div>
+      <div id="timeline-summary">
+        <h3>Übersicht</h3>
+        <ul id="summary-list"></ul>
+      </div>
     </section>
   </main>
 </body>
