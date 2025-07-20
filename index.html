@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Countdown seit dem 25.01.2025</title>
+  <link rel="stylesheet" href="assets/style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f0f0f0;
+    }
+    #count {
+      font-size: 2rem;
+      color: #333;
+    }
+  </style>
+</head>
+<body>
+  <h1>Seit dem 25. Januar 2025 sind vergangen:</h1>
+  <div id="count">Lade…</div>
+
+  <script>
+    // Ziel-Datum setzen (UTC)
+    const startDate = new Date('2025-01-25T00:00:00Z');
+
+    function updateCounter() {
+      const now = new Date();
+      let diff = now - startDate; // Millisekunden seit Start
+
+      if (diff < 0) diff = 0;     // falls Datum noch in der Zukunft
+
+      const seconds = Math.floor(diff / 1000) % 60;
+      const minutes = Math.floor(diff / (1000 * 60)) % 60;
+      const hours   = Math.floor(diff / (1000 * 60 * 60)) % 24;
+      const days    = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+      document.getElementById('count').textContent =
+        `${days} Tage, ${hours} Stunden, ${minutes} Minuten, ${seconds} Sekunden`;
+    }
+
+    // Update jede Sekunde
+    setInterval(updateCounter, 1000);
+    // Sofort initialisieren
+    updateCounter();
+  </script>
+</body>
+</html>

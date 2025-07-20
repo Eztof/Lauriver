@@ -1,0 +1,9 @@
+body {
+  background: linear-gradient(135deg, #ece9e6, #ffffff);
+}
+h1 {
+  color: #444;
+}
+#count {
+  font-weight: bold;
+}
