@@ -40,149 +40,189 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 // 3) Helpers
-function emailFromUsername(username) {
-  return `${username}@lauriver.app`;
-}
-async function updateUsage(updates) {
-  const user = auth.currentUser;
-  if (!user) return;
-  const ref = doc(db, "usage_logs", user.uid);
-  await setDoc(ref, { ...updates, lastUpdate: serverTimestamp() }, { merge: true });
+function emailFromUsername(u){ return `${u}@lauriver.app`; }
+async function updateUsage(updates){
+  const u = auth.currentUser;
+  if(!u) return;
+  await setDoc(doc(db,"usage_logs",u.uid),{...updates,lastUpdate:serverTimestamp()},{merge:true});
 }
 
-// 4) UI‑Refs
-const sections = {
-  login:      document.getElementById("login-section"),
-  register:   document.getElementById("register-section"),
-  home:       document.getElementById("home-section"),
-  calendar:   document.getElementById("calendar-section"),
-  packlist:   document.getElementById("packlist-section"),
-  timeline:   document.getElementById("timeline-section")
+// 4) UI‑References
+const sections     = {
+  login: document.getElementById("login-section"),
+  register: document.getElementById("register-section"),
+  home: document.getElementById("home-section"),
+  calendar: document.getElementById("calendar-section"),
+  packlist: document.getElementById("packlist-section"),
+  timeline: document.getElementById("timeline-section")
 };
-const logoutBtn  = document.getElementById("logout-btn");
-const packForm   = document.getElementById("packlist-form");
-const packInput  = document.getElementById("packlist-input");
-const packListUl = document.getElementById("packlist-items");
+const logoutBtn      = document.getElementById("logout-btn");
+const packForm       = document.getElementById("packlist-form");
+const packInput      = document.getElementById("packlist-input");
+const packListUl     = document.getElementById("packlist-items");
+const categoryForm   = document.getElementById("category-form");
+const categoryInput  = document.getElementById("category-input");
+const categorySelect = document.getElementById("category-select");
 
 // 5) View‑Switch
-function showView(name) {
-  Object.values(sections).forEach(s => s.classList.add("hidden"));
+function showView(name){
+  Object.values(sections).forEach(s=>s.classList.add("hidden"));
   sections[name].classList.remove("hidden");
-  updateUsage({ [`lastView_${name}`]: serverTimestamp() });
+  updateUsage({[`lastView_${name}`]:serverTimestamp()});
 }
 
-// 6) Auth‑Listener
-let packUnsub = null;
+// 6) Auth‑Listener & Real‑Time‑Listener starten
+let itemUnsub, catUnsub;
+let categories = [], items = [];
+
 onAuthStateChanged(auth, user => {
-  if (user) {
+  if(user){
     showView("home");
-    updateUsage({ lastLogin: serverTimestamp(), displayName: user.displayName });
-    // Packliste‑Listener starten
-    if (packUnsub) packUnsub();
-    const colRef = collection(db, "packlist_items");
-    const q = query(colRef, orderBy("createdAt"));
-    packUnsub = onSnapshot(q, snap => {
-      packListUl.innerHTML = "";
-      snap.forEach(docSnap => {
-        const data = docSnap.data();
-        const li = document.createElement("li");
-        // Checkbox
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = data.done;
-        cb.addEventListener("change", () =>
-          updateDoc(doc(db, "packlist_items", docSnap.id), { done: cb.checked, updatedAt: serverTimestamp() })
-        );
-        // Text
-        const span = document.createElement("span");
-        span.textContent = data.text;
-        span.contentEditable = true;
-        span.classList.add("packlist-text");
-        if (data.done) span.classList.add("completed");
-        span.addEventListener("blur", () => {
-          const txt = span.textContent.trim();
-          if (txt && txt !== data.text) {
-            updateDoc(doc(db, "packlist_items", docSnap.id), { text: txt, updatedAt: serverTimestamp() });
-          } else {
-            span.textContent = data.text;
-          }
-        });
-        // Delete
-        const del = document.createElement("button");
-        del.textContent = "🗑";
-        del.addEventListener("click", () =>
-          deleteDoc(doc(db, "packlist_items", docSnap.id))
-        );
-        // Zusammenbauen
-        li.append(cb, span, del);
-        packListUl.append(li);
-      });
+    updateUsage({lastLogin:serverTimestamp(),displayName:user.displayName});
+
+    // Kategorien‑Listener
+    if(catUnsub) catUnsub();
+    const catQ = query(collection(db,"packlist_categories"), orderBy("createdAt"));
+    catUnsub = onSnapshot(catQ, snap => {
+      categories = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      rebuildCategorySelect();
+      renderPacklist();
     });
+
+    // Items‑Listener
+    if(itemUnsub) itemUnsub();
+    const itemQ = query(collection(db,"packlist_items"), orderBy("createdAt"));
+    itemUnsub = onSnapshot(itemQ, snap => {
+      items = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+      renderPacklist();
+    });
+
   } else {
-    if (packUnsub) packUnsub();
+    if(catUnsub) catUnsub();
+    if(itemUnsub) itemUnsub();
     showView("login");
   }
 });
 
 // 7) Login
-document.getElementById("login-form").addEventListener("submit", e => {
+document.getElementById("login-form").addEventListener("submit",e=>{
   e.preventDefault();
   const u = document.getElementById("login-username").value.trim();
   const p = document.getElementById("login-password").value;
-  const remember = document.getElementById("remember-device").checked;
-  setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence)
-    .then(() => signInWithEmailAndPassword(auth, emailFromUsername(u), p))
-    .then(() => updateUsage({ lastLogin: serverTimestamp(), remember }))
-    .catch(err => alert("Fehler beim Einloggen: " + err.message));
+  const rem = document.getElementById("remember-device").checked;
+  setPersistence(auth, rem ? browserLocalPersistence : browserSessionPersistence)
+    .then(()=> signInWithEmailAndPassword(auth,emailFromUsername(u),p))
+    .then(()=> updateUsage({lastLogin:serverTimestamp(),remember:rem}))
+    .catch(err=>alert("Einloggen fehlgeschlagen: "+err.message));
 });
 
-// 8) Registration
-document.getElementById("register-form").addEventListener("submit", e => {
+// 8) Registrierung
+document.getElementById("register-form").addEventListener("submit",async e=>{
   e.preventDefault();
-  const u  = document.getElementById("register-username").value.trim();
+  const u = document.getElementById("register-username").value.trim();
   const p1 = document.getElementById("register-password").value;
   const p2 = document.getElementById("register-password-confirm").value;
-  if (p1 !== p2) return alert("Passwörter stimmen nicht überein.");
-  createUserWithEmailAndPassword(auth, emailFromUsername(u), p1)
-    .then(async cred => {
-      await updateProfile(cred.user, { displayName: u });
-      await setDoc(doc(db, "usage_logs", cred.user.uid), {
-        createdAt: serverTimestamp(),
-        lastLogin: serverTimestamp(),
-        displayName: u
-      });
-    })
-    .catch(err => alert("Fehler bei der Registrierung: " + err.message));
+  if(p1!==p2) return alert("Passwörter stimmen nicht überein.");
+  try {
+    const cred = await createUserWithEmailAndPassword(auth,emailFromUsername(u),p1);
+    await updateProfile(cred.user,{displayName:u});
+    await setDoc(doc(db,"usage_logs",cred.user.uid),{
+      createdAt:serverTimestamp(),
+      lastLogin:serverTimestamp(),
+      displayName:u
+    });
+  } catch(err){
+    alert("Registrierung fehlgeschlagen: "+err.message);
+  }
 });
 
-// 9) Switch Links
-document.getElementById("to-register").addEventListener("click", e => { e.preventDefault(); showView("register"); });
-document.getElementById("to-login").addEventListener("click", e => { e.preventDefault(); showView("login"); });
+// 9) Links
+document.getElementById("to-register").addEventListener("click",e=>{e.preventDefault(); showView("register");});
+document.getElementById("to-login")  .addEventListener("click",e=>{e.preventDefault(); showView("login");});
 
 // 10) Logout
-logoutBtn.addEventListener("click", async () => {
-  await updateUsage({ lastLogout: serverTimestamp() });
+logoutBtn.addEventListener("click",async ()=>{
+  await updateUsage({lastLogout:serverTimestamp()});
   signOut(auth);
 });
 
-// 11) Navigation Startseite
-document.getElementById("nav-calendar").addEventListener("click", () => showView("calendar"));
-document.getElementById("nav-packlist").addEventListener("click", () => showView("packlist"));
-document.getElementById("nav-timeline").addEventListener("click", () => showView("timeline"));
-document.querySelectorAll(".back-btn").forEach(btn =>
-  btn.addEventListener("click", () => showView("home"))
-);
+// 11) Navigation
+document.getElementById("nav-calendar").addEventListener("click",()=> showView("calendar"));
+document.getElementById("nav-packlist").addEventListener("click",()=> showView("packlist"));
+document.getElementById("nav-timeline").addEventListener("click",()=> showView("timeline"));
+document.querySelectorAll(".back-btn").forEach(b=> b.addEventListener("click",()=> showView("home")));
 
-// 12) Neues Packlist‑Item anlegen
-packForm.addEventListener("submit", e => {
+// 12) Kategorie erstellen
+categoryForm.addEventListener("submit", async e=>{
+  e.preventDefault();
+  const name = categoryInput.value.trim();
+  if(!name) return;
+  await addDoc(collection(db,"packlist_categories"),{
+    name,
+    createdAt: serverTimestamp(),
+    createdBy: auth.currentUser.uid
+  });
+  categoryInput.value = "";
+});
+
+// 13) Item hinzufügen
+packForm.addEventListener("submit",e=>{
   e.preventDefault();
   const text = packInput.value.trim();
-  if (!text) return;
-  addDoc(collection(db, "packlist_items"), {
+  const cat  = categorySelect.value;
+  if(!text) return;
+  addDoc(collection(db,"packlist_items"),{
     text,
     done: false,
+    categoryId: cat||null,
     createdAt: serverTimestamp(),
     createdBy: auth.currentUser.uid
   });
   packInput.value = "";
 });
+
+// 14) Hilfs‑Renderer
+function rebuildCategorySelect(){
+  categorySelect.innerHTML = `<option value="">– Keine Kategorie –</option>` +
+    categories.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+}
+function renderPacklist(){
+  packListUl.innerHTML = "";
+  // für jede Kategorie
+  categories.concat([{id:null,name:"Ohne Kategorie"}]).forEach(cat=>{
+    // Header
+    const header = document.createElement("li");
+    header.textContent = cat.name;
+    header.classList.add("category-header");
+    packListUl.append(header);
+    // Items dieser Kategorie
+    items.filter(i=> (i.categoryId||null) === cat.id).forEach(i=>{
+      const li = document.createElement("li");
+      // Checkbox
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.checked = i.done;
+      cb.addEventListener("change",()=> updateDoc(doc(db,"packlist_items",i.id),{done:cb.checked,updatedAt:serverTimestamp()}));
+      // Text
+      const span = document.createElement("span");
+      span.textContent = i.text;
+      span.contentEditable = true;
+      span.classList.add("packlist-text");
+      if(i.done) span.classList.add("completed");
+      span.addEventListener("blur",()=>{
+        const t = span.textContent.trim();
+        if(t && t!==i.text){
+          updateDoc(doc(db,"packlist_items",i.id),{text:t,updatedAt:serverTimestamp()});
+        } else {
+          span.textContent = i.text;
+        }
+      });
+      // Löschen
+      const del = document.createElement("button");
+      del.textContent = "🗑";
+      del.addEventListener("click",()=> deleteDoc(doc(db,"packlist_items",i.id)));
+      li.append(cb, span, del);
+      packListUl.append(li);
+    });
+  });
+}

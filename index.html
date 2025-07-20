@@ -54,14 +54,27 @@
       <p>Hier kommt später dein Kalender.</p>
     </section>
 
-    <!-- PACKLISTE -->
+    <!-- PACKLISTE MIT KATEGORIEN -->
     <section id="packlist-section" class="view hidden">
       <button class="back-btn">← Zurück</button>
       <h2>Packliste</h2>
+
+      <!-- Kategorie erstellen -->
+      <form id="category-form">
+        <input type="text" id="category-input" placeholder="Neue Kategorie hinzufügen" required>
+        <button type="submit">Kategorie erstellen</button>
+      </form>
+
+      <!-- Item hinzufügen mit Kategoriewahl -->
       <form id="packlist-form">
         <input type="text" id="packlist-input" placeholder="Item hinzufügen" required>
+        <select id="category-select">
+          <option value="">– Keine Kategorie –</option>
+        </select>
         <button type="submit">Hinzufügen</button>
       </form>
+
+      <!-- Gruppierte Liste -->
       <ul id="packlist-items"></ul>
     </section>
 
