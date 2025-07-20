@@ -1,88 +1,65 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Start – Lauriver</title>
-
-  <!-- Firebase SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-  <script>
-    // Deine Firebase-Konfiguration
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
-      authDomain: "lauriver-31a6f.firebaseapp.com",
-      projectId: "lauriver-31a6f",
-      storageBucket: "lauriver-31a6f.firebasestorage.app",
-      messagingSenderId: "508140835438",
-      appId: "1:508140835438:web:4326ed6b40c01037e64c7f"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.firestore();
-  </script>
-
-  <!-- Gemeinsame CSS & Dark‑Mode‑Loader -->
-  <link rel="stylesheet" href="style.css">
-  <script src="darkmode.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Lauriver</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <script>
-    // Auth‑Check + Nutzungsdaten updaten
-    auth.onAuthStateChanged(user => {
-      if (!user) {
-        window.location.href = 'login.html';
-      } else {
-        db.collection('users').doc(user.uid).update({
-          visits:    firebase.firestore.FieldValue.increment(1),
-          lastVisit: firebase.firestore.FieldValue.serverTimestamp()
-        });
-      }
-    });
-  </script>
+  <div class="container">
+    <header>
+      <img src="assets/logo.png" alt="Lauriver Logo" class="logo"/>
+      <h1>Lauriver</h1>
+    </header>
 
-  <header>
-    <button id="settings-btn">Einstellungen</button>
-    <button id="logout-btn">Ausloggen</button>
-  </header>
+    <!-- Registration Form -->
+    <section id="register-section" class="auth-section hidden">
+      <h2>Registrieren</h2>
+      <input id="reg-username" type="text" placeholder="Benutzername" />
+      <input id="reg-password" type="password" placeholder="Passwort" />
+      <label>
+        <input id="reg-remember" type="checkbox" />
+        Gerät merken
+      </label>
+      <button id="btn-register">Registrieren</button>
+      <p>Oder <a href="#" id="show-login">einloggen</a></p>
+    </section>
 
-  <main>
-    <h1>Seit dem 25. Januar 2025 sind vergangen:</h1>
-    <div id="count">Lade…</div>
-    <div class="nav-buttons">
-      <button id="to-packliste">Packliste</button>
-    </div>
-  </main>
+    <!-- Login Form -->
+    <section id="login-section" class="auth-section">
+      <h2>Login</h2>
+      <input id="login-username" type="text" placeholder="Benutzername" />
+      <input id="login-password" type="password" placeholder="Passwort" />
+      <label>
+        <input id="login-remember" type="checkbox" />
+        Gerät merken
+      </label>
+      <button id="btn-login">Einloggen</button>
+      <p>Oder <a href="#" id="show-register">registrieren</a></p>
+    </section>
 
-  <script>
-    // Navigation
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      auth.signOut().then(() => window.location.href = 'login.html');
-    });
-    document.getElementById('settings-btn').addEventListener('click', () => {
-      window.location.href = 'settings.html';
-    });
-    document.getElementById('to-packliste').addEventListener('click', () => {
-      window.location.href = 'packliste.html';
-    });
+    <!-- Dashboard -->
+    <section id="dashboard" class="hidden">
+      <h2>Willkommen, <span id="user-displayname"></span>!</h2>
+      <p>Seit dem 25.01.2025 sind vergangen:</p>
+      <div id="counter"></div>
+      <button id="btn-logout">Logout</button>
+    </section>
 
-    // Countdown‑Logik
-    const startDate = new Date('2025-01-25T00:00:00Z');
-    function updateCounter(){
-      const now  = new Date();
-      let diff    = now - startDate;
-      if (diff < 0) diff = 0;
-      const days  = Math.floor(diff / 86400000);
-      const hrs   = Math.floor(diff / 3600000) % 24;
-      const mins  = Math.floor(diff / 60000) % 60;
-      const secs  = Math.floor(diff / 1000) % 60;
-      document.getElementById('count').textContent =
-        `${days} Tage, ${hrs} Stunden, ${mins} Minuten, ${secs} Sekunden`;
-    }
-    setInterval(updateCounter, 1000);
-    updateCounter();
-  </script>
+    <footer>
+      <small>© Lauriver</small>
+    </footer>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <!-- App Scripts -->
+  <script src="js/firebase-config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/countdown.js"></script>
 </body>
 </html>
