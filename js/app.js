@@ -1,3 +1,4 @@
+// js/app.js
 // 1) Firebase‑SDK importieren (Auth + Firestore)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
 import {
@@ -173,6 +174,10 @@ logoutBtn.addEventListener("click", async () => {
 document.getElementById("nav-calendar").addEventListener("click", () => showView("calendar"));
 document.getElementById("nav-packlist").addEventListener("click", () => showView("packlist"));
 document.getElementById("nav-timeline").addEventListener("click", () => showView("timeline"));
+// Neuer Listener für externen Link
+document.getElementById("nav-kennzeichen").addEventListener("click", () => {
+  window.open("https://eztof.github.io/Kennzeichen-ZYO/", "_blank");
+});
 document.querySelectorAll(".back-btn").forEach(btn =>
   btn.addEventListener("click", () => showView("home"))
 );
