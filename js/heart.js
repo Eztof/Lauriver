@@ -7,6 +7,7 @@ import {
   setDoc,
   updateDoc,
   collection,
+  addDoc,
   query,
   orderBy,
   onSnapshot,
@@ -14,7 +15,7 @@ import {
   increment
 } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// 1) Firebase‑Konfiguration (identisch mit app.js)
+// 1) Firebase‑Konfiguration
 const firebaseConfig = {
   apiKey: "AIzaSyA0WC5gDtcq4znUZxqvGn5j1BPodnsgg9E",
   authDomain: "lauriver-31a6f.firebaseapp.com",
@@ -50,31 +51,52 @@ zoomContainer.addEventListener("wheel", e => {
   zoomContainer.style.transform = `scale(${scale})`;
 });
 
-// 5) Auth‑Listener
-onAuthStateChanged(auth, user => {
-  if (user) {
-    currentUser = user;
-    subscribeToCounts();
-  } else {
+// 5) Auth‑Listener: nur hier initialisieren
+onAuthStateChanged(auth, async user => {
+  if (!user) {
     window.location.href = "index.html";
+    return;
   }
+  currentUser = user;
+  await ensureUserDoc();    // nur einmal beim Login
+  subscribeToCounts();      // Zähler‑Liste
+  subscribeToHearts();      // Herzen‑Canvas
 });
 
-// 6) Live‑Liste aller Nutzer‑Herzen
+// 6) Nutzer‑Zähler live
 function subscribeToCounts() {
   const countsQuery = query(collection(db, "heart_counts"), orderBy("count", "desc"));
   onSnapshot(countsQuery, snap => {
     userListUl.innerHTML = "";
     snap.docs.forEach(d => {
-      const data = d.data();
+      const { displayName, count } = d.data();
       const li = document.createElement("li");
-      li.textContent = `${data.displayName || d.id}: ${data.count || 0} ❤️`;
+      li.textContent = `${displayName || d.id}: ${count || 0} ❤️`;
       userListUl.append(li);
     });
   });
 }
 
-// 7) Herz‑Dokument anlegen (falls neu)
+// 7) Herz‑Canvas live
+function subscribeToHearts() {
+  const heartsQuery = query(collection(db, "hearts"), orderBy("timestamp"));
+  onSnapshot(heartsQuery, snap => {
+    zoomContainer.innerHTML = "";  // komplett neu rendern
+    snap.docs.forEach(d => {
+      const { x, y, size, hue } = d.data();
+      const heart = document.createElement("span");
+      heart.textContent = "❤️";
+      heart.style.position = "absolute";
+      heart.style.left     = `${x}px`;
+      heart.style.top      = `${y}px`;
+      heart.style.fontSize = `${size}px`;
+      heart.style.color    = `hsl(${hue},100%,50%)`;
+      zoomContainer.append(heart);
+    });
+  });
+}
+
+// 8) Stelle sicher, dass dein Zähler‑Dok existiert
 async function ensureUserDoc() {
   const ref = doc(db, "heart_counts", currentUser.uid);
   await setDoc(ref, {
@@ -83,29 +105,25 @@ async function ensureUserDoc() {
   }, { merge: true });
 }
 
-// 8) Klick auf Herz‑Button
+// 9) Herz setzen: Speichere in beiden Collections
 heartBtn.addEventListener("click", async () => {
-  await ensureUserDoc();
-
-  // Herz auf Leinwand
-  const size = Math.random() * 40 + 20;          // 20–60 px
-  const hue  = Math.random() * 30;               // Rot‑Töne
+  // 9.1) Zufallswerte
+  const size = Math.random() * 40 + 20;   // 20–60 px
+  const hue  = Math.random() * 30;        // Rot‑Töne
   const rect = zoomContainer.getBoundingClientRect();
-  const x    = Math.random() * (rect.width/scale - size);
+  const x    = Math.random() * (rect.width/scale  - size);
   const y    = Math.random() * (rect.height/scale - size);
 
-  const heart = document.createElement("span");
-  heart.textContent = "❤️";
-  heart.style.position   = "absolute";
-  heart.style.left       = `${x}px`;
-  heart.style.top        = `${y}px`;
-  heart.style.fontSize   = `${size}px`;
-  heart.style.color      = `hsl(${hue},100%,50%)`;
-  zoomContainer.append(heart);
+  // 9.2) Herz‑Objekt global speichern
+  await addDoc(collection(db, "hearts"), {
+    userId:    currentUser.uid,
+    x, y, size, hue,
+    timestamp: serverTimestamp()
+  });
 
-  // Zähler in Firestore erhöhen
-  const ref = doc(db, "heart_counts", currentUser.uid);
-  await updateDoc(ref, {
+  // 9.3) Nutzer‑Zähler inkrementieren
+  const countRef = doc(db, "heart_counts", currentUser.uid);
+  await updateDoc(countRef, {
     count: increment(1),
     lastClicked: serverTimestamp()
   });
