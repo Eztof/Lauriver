@@ -1,5 +1,6 @@
 /* css/heart.css */
 
+/* 1) Sticky Header mit Back‑Button */
 header {
   position: sticky;
   top: 0;
@@ -11,8 +12,12 @@ header {
   color: white;
   z-index: 1000;
 }
-
-.back-btn {
+header h1 {
+  font-size: 1.25rem;
+  margin: 0;
+}
+/* Spezifische Regel für den Back‑Button, damit sie das Basis‑CSS überschreibt */
+header button.back-btn {
   background: none;
   border: none;
   color: white;
@@ -22,13 +27,7 @@ header {
   margin: 0;
 }
 
-header h1 {
-  font-size: 1.25rem;
-  margin: 0;
-}
-
-/* Rest unverändert */
-
+/* 2) Zoom‑Container */
 #zoom-container {
   width: 100%;
   height: 500px;
@@ -38,29 +37,32 @@ header h1 {
   transform-origin: 0 0;
 }
 
+/* 3) Herz‑Button in der Mitte */
 .center {
   text-align: center;
   margin: 1rem 0;
 }
-
 #heart-btn {
   font-size: 2rem;
   padding: 0.5rem 1rem;
   border-radius: 0.5rem;
+  background: #e91e63;
+  color: white;
+  border: none;
+  cursor: pointer;
 }
 
+/* 4) Nutzer‑Liste */
 #user-list-container {
   text-align: center;
   margin-top: 1rem;
 }
-
 #user-list {
   list-style: none;
   padding: 0;
   display: inline-block;
   text-align: left;
 }
-
 #user-list li {
   margin: 0.25rem 0;
   font-size: 1rem;
