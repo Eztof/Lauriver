@@ -178,6 +178,9 @@ document.getElementById("nav-timeline").addEventListener("click", () => showView
 document.getElementById("nav-kennzeichen").addEventListener("click", () => {
   window.open("https://eztof.github.io/Kennzeichen-ZYO/", "_blank");
 });
+document.getElementById("nav-heart").addEventListener("click", () => {
+  window.location.href = "heart.html";
+});
 document.querySelectorAll(".back-btn").forEach(btn =>
   btn.addEventListener("click", () => showView("home"))
 );
