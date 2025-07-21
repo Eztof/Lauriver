@@ -112,7 +112,7 @@ async function ensureUserDoc() {
 
 // --- 9) Klick auf Herz-Button: Speichern und Zähler inkrementieren ---
 heartBtn.addEventListener("click", async () => {
-  const size = Math.random() * 40 + 20;   // 20–60 px
+  const size = Math.random() * 40 + 10;   // 20–60 px
   const hue  = Math.random() * 30;        // Rot-Töne
   const rect = zoomContainer.getBoundingClientRect();
   const x    = Math.random() * (rect.width/scale  - size);
