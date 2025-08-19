@@ -5,16 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Lauriver</title>
   <link rel="stylesheet" href="./css/styles.css" />
-  <style>
-    /* Boot-Fallback: bleibt sichtbar, bis JS rendert */
-    #boot-cover{
-      position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
-      background:#0b1022;color:#fff;z-index:9999;flex-direction:column;gap:10px;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
-    }
-    #boot-cover button{padding:10px 14px;border-radius:10px;border:1px solid #334;
-      background:#141a33;color:#fff}
-  </style>
 </head>
 <body>
   <header class="topbar">
@@ -26,49 +16,6 @@
     <div id="app"></div>
   </main>
 
-  <!-- Fallback-Overlay -->
-  <div id="boot-cover">
-    <div>lade&nbsp;App …</div>
-    <button id="hard-reload">Neu laden</button>
-  </div>
-
-  <script>
-    // Hart auf die Start-URL springen (hilft, wenn reload "hängen" bleibt)
-    document.getElementById('hard-reload').onclick = function () {
-      location.href = 'https://eztof.github.io/Lauriver/#/';
-    };
-    // Wird vom Code aufgerufen, sobald gerendert wurde
-    window.__hideBootCover = () => {
-      const el = document.getElementById('boot-cover');
-      if (el) el.style.display = 'none';
-    };
-    // Sicherheitsnetz: alle 700ms prüfen, ob #app Inhalt hat
-    (function check(){
-      const app = document.getElementById('app');
-      if (app && app.innerHTML.trim().length) return window.__hideBootCover();
-      setTimeout(check, 700);
-    })();
-    // Fehler sichtbar machen (sonst sieht man nur "leer")
-    window.addEventListener('error', e => {
-      const el = document.getElementById('boot-cover');
-      if (el) el.innerHTML = '<div style="max-width:90%;text-align:center">Fehler: '
-        + (e.message||'unbekannt') + '</div><button id="hard-reload-2">Neu laden</button>';
-      const b = document.getElementById('hard-reload-2');
-      if (b) b.onclick = () => location.href = 'https://eztof.github.io/Lauriver/#/';
-    });
-    window.addEventListener('unhandledrejection', e => {
-      const el = document.getElementById('boot-cover');
-      if (el) el.innerHTML = '<div style="max-width:90%;text-align:center">Fehler: '
-        + (e.reason?.message||'unbekannt') + '</div><button id="hard-reload-3">Neu laden</button>';
-      const b = document.getElementById('hard-reload-3');
-      if (b) b.onclick = () => location.href = 'https://eztof.github.io/Lauriver/#/';
-    });
-  </script>
-
-  <!-- ES-Module Polyfill (macht Module auch in älteren WebViews lauffähig) -->
-  <script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1/dist/es-module-shims.min.js"></script>
-
-  <!-- Lade dein App-Entry als "module-shim" statt "module" -->
-  <script type="module-shim" src="./js/main.js?v=5"></script>
+  <script type="module" src="./js/main.js"></script>
 </body>
 </html>

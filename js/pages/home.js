@@ -1,7 +1,6 @@
 // js/pages/home.js
 import { html, mount } from "../ui.js";
 import { supabase } from "../supabaseClient.js";
-import { go } from "../router.js";
 
 function menuCard(href, title, desc) {
   return `<a href="#${href}" class="card menu-card" style="text-decoration:none;color:inherit">
@@ -28,10 +27,6 @@ export async function HomePage() {
   mount(content, document.getElementById("app"));
 
   document.getElementById("logout").addEventListener("click", async () => {
-    try {
-      await supabase.auth.signOut();
-    } finally {
-      location.hash = "#/"; // zurück zur Login-Seite
-    }
+    try { await supabase.auth.signOut(); } finally { location.hash = "#/"; }
   });
 }
