@@ -5,9 +5,6 @@ import * as db from "./db.js";
 import { SITE_URL } from "./config.js";
 import { getDeviceId } from "./device.js";
 
-/**
- * Registrierung – Profil per DB-Trigger, Redirect auf Projekt-URL
- */
 export async function signUp({ email, password, displayName }) {
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -19,11 +16,8 @@ export async function signUp({ email, password, displayName }) {
   });
   if (error) throw error;
 
-  if (!data.session) {
-    toast("Registrierung gestartet – bitte E-Mail bestätigen.");
-  } else {
-    toast("Registrierung erfolgreich – willkommen!");
-  }
+  if (!data.session) toast("Registrierung gestartet – bitte E-Mail bestätigen.");
+  else toast("Registrierung erfolgreich – willkommen!");
   return data;
 }
 
@@ -38,6 +32,8 @@ export async function signOut() {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
   toast("Abgemeldet.");
+  // Fallback-Redirect (zusätzlich zum Home-Button-Logout)
+  if (location.hash !== "#/") location.hash = "#/";
 }
 
 export async function getSession() {
@@ -46,7 +42,7 @@ export async function getSession() {
   return data.session;
 }
 
-// Auth-Events: last_seen_at + Log mit device_id
+// last_seen + Auth-Log
 supabase.auth.onAuthStateChange(async (event, session) => {
   const user = session?.user || null;
   try {

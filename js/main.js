@@ -7,14 +7,14 @@ import { HomePage } from "./pages/home.js";
 import { CalendarPage } from "./pages/calendar.js";
 import { PlatesPage } from "./pages/plates.js";
 import { PacklistPage } from "./pages/packlist.js";
-import { BookmarksPage } from "./pages/bookmarks.js"; // NEU
+import { BookmarksPage } from "./pages/bookmarks.js";
 
+// Hilfsfunktion: Basis-URL (für GitHub Pages Unterpfad)
 function baseUrl() {
-  // https://eztof.github.io/Lauriver (ohne Slash am Ende)
   return `${location.origin}${location.pathname.replace(/index\.html$/, "").replace(/\/$/, "")}`;
 }
 
-// --- Auth-Callback aus Bestätigungs-Mail erkennen & URL säubern ---
+// Auth-Callback aus Bestätigungs-Mail erkennen & URL säubern
 function handleAuthCallback() {
   const h = location.hash || "";
   const isOurCallback = h.includes("#auth-callback");
@@ -22,72 +22,62 @@ function handleAuthCallback() {
     /access_token=/.test(h) || /refresh_token=/.test(h) || /type=(recovery|signup|magiclink)/.test(h);
 
   if (isOurCallback || hasSupabaseTokens) {
-    // detectSessionInUrl übernimmt die Session bereits.
     history.replaceState(null, "", `${baseUrl()}/#/home`);
   }
 }
 handleAuthCallback();
 
-// Jahr im Footer
-el("#year").textContent = new Date().getFullYear();
-
-// Top-Navigation (abhängig von Login-Status)
+// Minimal-Navigation zeichnen
 function drawNav(auth) {
   const nav = el("#top-nav");
-  if (!auth) {
-    nav.innerHTML = `<a href="#/">Login</a>`;
-    return;
+  if (auth) {
+    nav.innerHTML = `<a href="#/home">Home</a>`;
+  } else {
+    nav.innerHTML = ""; // ausgeloggt: keine Topbar-Links
   }
-  nav.innerHTML = `
-    <a href="#/home">Start</a>
-    <a href="#/calendar">Kalender</a>
-    <a href="#/plates">Kennzeichen</a>
-    <a href="#/packlist">Packliste</a>
-    <a href="#/bookmarks">Merken</a>
-    <a href="#/" id="logout">Logout</a>
-  `;
-  nav.querySelector("#logout").addEventListener("click", async (e) => {
-    e.preventDefault();
-    await supabase.auth.signOut();
-    go("/");
-  });
 }
 
 // Routen
 defineRoute("/", async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) { drawNav(true); return go("/home"); }
-  drawNav(false); await LoginPage();
+  drawNav(false);
+  await LoginPage();
 });
 
 defineRoute("/home", async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return go("/");
-  drawNav(true); await HomePage();
+  if (!session?.user) { drawNav(false); return go("/"); }
+  drawNav(true);
+  await HomePage();
 });
 
 defineRoute("/calendar", async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return go("/");
-  drawNav(true); await CalendarPage();
+  if (!session?.user) { drawNav(false); return go("/"); }
+  drawNav(true);
+  await CalendarPage();
 });
 
 defineRoute("/plates", async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return go("/");
-  drawNav(true); await PlatesPage();
+  if (!session?.user) { drawNav(false); return go("/"); }
+  drawNav(true);
+  await PlatesPage();
 });
 
 defineRoute("/packlist", async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return go("/");
-  drawNav(true); await PacklistPage();
+  if (!session?.user) { drawNav(false); return go("/"); }
+  drawNav(true);
+  await PacklistPage();
 });
 
 defineRoute("/bookmarks", async () => {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.user) return go("/");
-  drawNav(true); await BookmarksPage();
+  if (!session?.user) { drawNav(false); return go("/"); }
+  drawNav(true);
+  await BookmarksPage();
 });
 
 defineRoute("/404", async () => {
@@ -95,5 +85,5 @@ defineRoute("/404", async () => {
   document.getElementById("app").innerHTML = `<div class="card">Seite nicht gefunden.</div>`;
 });
 
-// Direkt rendern
+// Start rendern
 render();
