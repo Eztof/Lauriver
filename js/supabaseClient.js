@@ -6,6 +6,6 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true, // <— wichtig für E-Mail-Bestätigung (access_token im Hash)
+    detectSessionInUrl: true, // benötigt für E-Mail-Bestätigung (#access_token im Hash)
   },
 });

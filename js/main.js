@@ -7,19 +7,23 @@ import { HomePage } from "./pages/home.js";
 import { CalendarPage } from "./pages/calendar.js";
 import { PlatesPage } from "./pages/plates.js";
 import { PacklistPage } from "./pages/packlist.js";
+import { BookmarksPage } from "./pages/bookmarks.js"; // NEU
 
-// --- NEU: Auth-Callback vom E-Mail-Link erkennen & URL säubern ---
+function baseUrl() {
+  // https://eztof.github.io/Lauriver (ohne Slash am Ende)
+  return `${location.origin}${location.pathname.replace(/index\.html$/, "").replace(/\/$/, "")}`;
+}
+
+// --- Auth-Callback aus Bestätigungs-Mail erkennen & URL säubern ---
 function handleAuthCallback() {
   const h = location.hash || "";
-  // a) Unser eigener Marker "#auth-callback"
-  const isOurCallback = h.startsWith("#auth-callback");
-  // b) Oder Supabase hängt direkt Tokens in den Hash (#access_token=...)
-  const hasToken = /access_token=/.test(h) || /type=recovery/.test(h) || /type=signup/.test(h);
+  const isOurCallback = h.includes("#auth-callback");
+  const hasSupabaseTokens =
+    /access_token=/.test(h) || /refresh_token=/.test(h) || /type=(recovery|signup|magiclink)/.test(h);
 
-  if (isOurCallback || hasToken) {
-    // Dank detectSessionInUrl hat Supabase die Session bereits übernommen.
-    // URL säubern und zur Startseite leiten.
-    history.replaceState(null, "", `${location.origin}/#/home`);
+  if (isOurCallback || hasSupabaseTokens) {
+    // detectSessionInUrl übernimmt die Session bereits.
+    history.replaceState(null, "", `${baseUrl()}/#/home`);
   }
 }
 handleAuthCallback();
@@ -39,6 +43,7 @@ function drawNav(auth) {
     <a href="#/calendar">Kalender</a>
     <a href="#/plates">Kennzeichen</a>
     <a href="#/packlist">Packliste</a>
+    <a href="#/bookmarks">Merken</a>
     <a href="#/" id="logout">Logout</a>
   `;
   nav.querySelector("#logout").addEventListener("click", async (e) => {
@@ -48,7 +53,7 @@ function drawNav(auth) {
   });
 }
 
-// Routen definieren
+// Routen
 defineRoute("/", async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (session?.user) { drawNav(true); return go("/home"); }
@@ -77,6 +82,12 @@ defineRoute("/packlist", async () => {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session?.user) return go("/");
   drawNav(true); await PacklistPage();
+});
+
+defineRoute("/bookmarks", async () => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.user) return go("/");
+  drawNav(true); await BookmarksPage();
 });
 
 defineRoute("/404", async () => {
