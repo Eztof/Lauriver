@@ -62,3 +62,12 @@ body{
 .footer{opacity:.6; text-align:center; padding:24px}
 .hidden{display:none !important}
 .toast{position:fixed; right:16px; bottom:16px; background:#111827; border:1px solid #1f2937; padding:10px 12px; border-radius:10px}
+
+.badge{
+  display:inline-block;
+  padding:6px 10px;
+  border-radius:9999px;
+  border:1px solid #1f2937;
+  background:#0b1022;
+  font-size:13px;
+}
