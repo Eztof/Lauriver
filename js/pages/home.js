@@ -31,8 +31,7 @@ export async function HomePage() {
     try {
       await supabase.auth.signOut();
     } finally {
-      // sichere Weiterleitung zum Login
-      location.hash = "#/"; // Router zeigt dann LoginPage
+      location.hash = "#/"; // zurück zur Login-Seite
     }
   });
 }

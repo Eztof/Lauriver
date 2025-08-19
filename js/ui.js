@@ -21,7 +21,6 @@ export function mount(node, into) {
 }
 
 export function toast(msg) {
-  // sehr schlanke Toast-Variante
   const t = document.createElement("div");
   t.className = "toast";
   t.textContent = msg;
