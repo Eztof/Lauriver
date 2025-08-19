@@ -5,8 +5,9 @@ import * as db from "./db.js";
 
 /**
  * Registrierung
- * - Legt KEIN Profil im Frontend an (das macht der DB-Trigger).
+ * - Profil wird per DB-Trigger angelegt (Option B).
  * - Wenn E-Mail-Bestätigung aktiv ist, gibt signUp KEINE Session zurück.
+ * - Wir geben eine Callback-Route an, die wir im main.js behandeln.
  */
 export async function signUp({ email, password, displayName }) {
   const { data, error } = await supabase.auth.signUp({
@@ -14,12 +15,11 @@ export async function signUp({ email, password, displayName }) {
     password,
     options: {
       data: { display_name: displayName || null },
-      emailRedirectTo: location.origin, // optional
+      emailRedirectTo: `${location.origin}/#auth-callback`, // <— wichtig
     },
   });
   if (error) throw error;
 
-  // Hinweis je nach Setup: mit/ohne sofortige Session
   if (!data.session) {
     toast("Registrierung gestartet – bitte E-Mail bestätigen.");
   } else {
@@ -66,14 +66,10 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
   try {
     if (user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED")) {
-      // last_seen_at aktualisieren
       await db.touchProfile(user.id);
-      // Auth-Ereignis loggen (RLS: user_id = auth.uid())
       await db.insertAuthLog({ event, userAgent: navigator.userAgent });
     }
-    // SIGNED_OUT: keine Session → kein Log (RLS würde blocken)
   } catch (e) {
-    // Keine harten Fehler im UI auslösen – stilles Logging
     console.warn("Auth state handling error:", e);
   }
 });
