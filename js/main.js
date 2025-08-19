@@ -9,32 +9,15 @@ import { PlatesPage } from "./pages/plates.js";
 import { PacklistPage } from "./pages/packlist.js";
 import { BookmarksPage } from "./pages/bookmarks.js";
 
-// Hilfsfunktion: Basis-URL (für GitHub Pages Unterpfad)
-function baseUrl() {
-  return `${location.origin}${location.pathname.replace(/index\.html$/, "").replace(/\/$/, "")}`;
-}
-
-// Auth-Callback aus Bestätigungs-Mail erkennen & URL säubern
-function handleAuthCallback() {
-  const h = location.hash || "";
-  const isOurCallback = h.includes("#auth-callback");
-  const hasSupabaseTokens =
-    /access_token=/.test(h) || /refresh_token=/.test(h) || /type=(recovery|signup|magiclink)/.test(h);
-
-  if (isOurCallback || hasSupabaseTokens) {
-    history.replaceState(null, "", `${baseUrl()}/#/home`);
-  }
-}
-handleAuthCallback();
-
-// Minimal-Navigation zeichnen
+// Minimal-Topbar rechts nur Home (wenn eingeloggt)
 function drawNav(auth) {
   const nav = el("#top-nav");
-  if (auth) {
-    nav.innerHTML = `<a href="#/home">Home</a>`;
-  } else {
-    nav.innerHTML = ""; // ausgeloggt: keine Topbar-Links
-  }
+  nav.innerHTML = auth ? `<a href="#/home">Home</a>` : "";
+}
+
+// Erzwinge Hash-Routing als Start
+if (!location.hash || location.hash === "#") {
+  location.replace("#/");
 }
 
 // Routen
@@ -82,7 +65,7 @@ defineRoute("/bookmarks", async () => {
 
 defineRoute("/404", async () => {
   drawNav(false);
-  document.getElementById("app").innerHTML = `<div class="card">Seite nicht gefunden.</div>`;
+  el("#app").innerHTML = `<div class="card">Seite nicht gefunden.</div>`;
 });
 
 // Start rendern
