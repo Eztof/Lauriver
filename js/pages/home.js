@@ -2,7 +2,8 @@
 import { html, mount } from "../ui.js";
 
 function menuCard(href, title, desc) {
-  return html`<a href="#${href}" class="card menu-card" style="text-decoration:none;color:inherit">
+  // WICHTIG: String zurückgeben, kein DocumentFragment
+  return `<a href="#${href}" class="card menu-card" style="text-decoration:none;color:inherit">
     <h2>${title}</h2>
     <p class="small">${desc}</p>
   </a>`;

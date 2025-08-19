@@ -3,11 +3,10 @@ import { supabase } from "./supabaseClient.js";
 import { toast } from "./ui.js";
 import * as db from "./db.js";
 import { SITE_URL } from "./config.js";
+import { getDeviceId } from "./device.js";
 
 /**
- * Registrierung
- * - Profil wird per DB-Trigger angelegt (Option B).
- * - Wir setzen eine feste Redirect-URL auf dein Projekt (kein location.origin).
+ * Registrierung – Profil per DB-Trigger, Redirect auf Projekt-URL
  */
 export async function signUp({ email, password, displayName }) {
   const { data, error } = await supabase.auth.signUp({
@@ -15,7 +14,6 @@ export async function signUp({ email, password, displayName }) {
     password,
     options: {
       data: { display_name: displayName || null },
-      // Wichtig: Projekt-URL, damit E-Mail-Link auf /Lauriver zeigt
       emailRedirectTo: `${SITE_URL}/#auth-callback`,
     },
   });
@@ -48,13 +46,17 @@ export async function getSession() {
   return data.session;
 }
 
-// Auth-Events: last_seen_at updaten + Log schreiben
+// Auth-Events: last_seen_at + Log mit device_id
 supabase.auth.onAuthStateChange(async (event, session) => {
   const user = session?.user || null;
   try {
     if (user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED")) {
       await db.touchProfile(user.id);
-      await db.insertAuthLog({ event, userAgent: navigator.userAgent });
+      await db.insertAuthLog({
+        event,
+        userAgent: navigator.userAgent,
+        deviceId: getDeviceId(),
+      });
     }
   } catch (e) {
     console.warn("Auth state handling error:", e);
