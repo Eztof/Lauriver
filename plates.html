@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121826" media="(prefers-color-scheme: dark)">
+  <title>Lauriver – Kennzeichen</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+  <style>
+    /* kleine Ergänzungen nur für diese Seite */
+    .wrap { padding: 16px; display: grid; gap: 16px; }
+    .bar { width: 100%; height: 10px; border-radius: 999px; background: var(--border); overflow: hidden; }
+    .bar > i { display:block; height: 100%; width: 0%; background: var(--accent); }
+    .kpi { display:flex; align-items: baseline; gap: 8px; }
+    .kpi strong { font-size: 1.8rem; }
+    .row { display:grid; gap: 10px; grid-template-columns: 1fr auto; }
+    .row > * { width: 100%; }
+    .input-inline { display:flex; gap: 8px; }
+    .input-inline input { flex: 1; }
+    .table { width: 100%; border-collapse: collapse; }
+    .table th, .table td { padding: 10px; border-bottom: 1px solid var(--border); text-align:left; }
+    .table th { user-select: none; cursor: pointer; }
+    .muted-sm { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header class="appbar">
+    <div class="appbar-left">
+      <a href="./app.html" class="muted" aria-label="Zurück zur Übersicht">← Zurück</a>
+    </div>
+    <div class="appbar-right">
+      <span id="user-badge">Kennzeichen</span>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- Fortschritt -->
+    <section class="card">
+      <div class="kpi">
+        <strong><span id="count-picked">0</span> / <span id="count-total">768</span></strong>
+        <span class="muted-sm">gepickt</span>
+      </div>
+      <div class="bar" aria-label="Fortschritt">
+        <i id="progress"></i>
+      </div>
+    </section>
+
+    <!-- Eingabe -->
+    <section class="card">
+      <h2>Kennzeichen eintragen</h2>
+      <div class="row">
+        <div class="input-inline">
+          <input id="plate-input" type="text" placeholder="z. B. ABG" inputmode="latin" maxlength="4" />
+          <button id="btn-pick">Pick</button>
+        </div>
+        <div style="min-width:160px">
+          <input id="search-input" type="search" placeholder="Suchen (Code, Ort, Land)" />
+        </div>
+      </div>
+      <p id="pick-error" class="error" aria-live="polite"></p>
+    </section>
+
+    <!-- Liste -->
+    <section class="card">
+      <h2>Gepickte Kennzeichen</h2>
+      <table class="table" id="picks-table" aria-describedby="table-hint">
+        <thead>
+          <tr>
+            <th data-sort="code">Code ▲▼</th>
+            <th data-sort="label">Ort ▲▼</th>
+            <th data-sort="state">Bundesland ▲▼</th>
+            <th data-sort="date">Datum ▲▼</th>
+          </tr>
+        </thead>
+        <tbody id="picks-body">
+          <!-- JS füllt -->
+        </tbody>
+      </table>
+      <p id="table-hint" class="muted-sm">Tippe auf die Spaltenüberschriften, um zu sortieren.</p>
+    </section>
+  </main>
+
+  <!-- Supabase -->
+  <script type="module" src="https://esm.sh/@supabase/supabase-js@2"></script>
+
+  <!-- App-Module -->
+  <script type="module" src="./js/supabaseClient.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module" src="./js/db.js"></script>
+
+  <!-- Kennzeichen-Module -->
+  <script type="module" src="./js/plates_api.js"></script>
+  <script type="module" src="./js/plates_ui.js"></script>
+  <script type="module" src="./js/plates_page.js"></script>
+</body>
+</html>
