@@ -6,7 +6,7 @@
   --card: #ffffff;
   --tile: #f8fafc;     /* sehr helles Grau */
   --border: #d1d5db;   /* deutlicher Rand */
-  --accent: #2563eb;   /* Primär */
+  --accent: #1d4ed8;   /* dunkleres Blau für besseren Kontrast im Light-Mode */
   --accent-press: #1e40af;
   --error: #b00020;
   --radius: 16px;
@@ -37,6 +37,7 @@ body {
   color: var(--text);
   font: 500 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   color-scheme: light dark;
+  overflow-x: hidden;           /* kein horizontales Scrollen */
 }
 
 a { color: var(--accent); text-decoration: none; }
@@ -66,22 +67,23 @@ a:hover { text-decoration: underline; }
 h1, h2 { margin: 0 0 8px; font-weight: 700; }
 p { margin: 0; }
 
-/* Tabs */
+/* Tabs (Login/Registrieren) – mehr Kontrast im Light Mode */
 .tabs { display: flex; gap: 8px; margin: 8px 0 16px; }
 .tab {
   flex: 1;
   padding: 12px 10px;
   border-radius: 12px;
-  border: 1px solid var(--border);
+  border: 2px solid var(--border);
   background: var(--tile);
+  color: var(--text);
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
 }
 .tab.active {
-  outline: 2px solid var(--accent);
-  outline-offset: 0;
-  border-color: transparent;
+  background: #e0eaff;
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px rgba(29, 78, 216, 0.25);
 }
 
 /* Forms */
@@ -100,26 +102,30 @@ input {
   padding: 10px 12px;
   background: var(--card);
   color: var(--text);
+  width: 100%;
 }
 input::placeholder { color: var(--muted); }
 
 input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.25);
 }
 
+/* Buttons – extra Kontrast im Light Mode */
 button {
   padding: 0 16px;
   background: var(--accent);
-  color: #fff;
+  color: #ffffff;
   border-color: var(--accent);
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.2px;
   cursor: pointer;
   transition: transform 80ms, filter 120ms, background 120ms;
   touch-action: manipulation;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.08);
 }
-button:hover { filter: brightness(1.05); }
+button:hover { filter: brightness(1.06); }
 button:active { transform: translateY(1px); background: var(--accent-press); }
 
 .remember {
@@ -185,24 +191,54 @@ button:active { transform: translateY(1px); background: var(--accent-press); }
   margin: 0 auto;      /* zentrieren */
 }
 
+/* Fortschritt */
 .kpi { display:flex; align-items: baseline; gap: 8px; }
 .kpi strong { font-size: 1.8rem; }
-
 .bar { width: 100%; height: 10px; border-radius: 999px; background: var(--border); overflow: hidden; margin-top: 10px; }
 .bar > i { display:block; height: 100%; width: 0%; background: var(--accent); }
 
+/* Eingabezeilen */
 .row { display:grid; gap: 10px; grid-template-columns: 1fr; }
 .row > * { width: 100%; }
 .input-inline { display:flex; gap: 8px; }
 .input-inline input { flex: 1; }
 .search-wrap { min-width: 100%; }
-
 @media (min-width: 520px) {
   .row { grid-template-columns: 1fr auto; }
   .search-wrap { min-width: 220px; }
 }
 
-/* Tabelle */
-.table { width: 100%; border-collapse: collapse; }
-.table th, .table td { padding: 10px; border-bottom: 1px solid var(--border); text-align:left; color: var(--text); }
+/* Tabelle – schmal, ohne horizontales Scrollen */
+.table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.table th, .table td {
+  padding: 8px;
+  border-bottom: 1px solid var(--border);
+  text-align:left;
+  color: var(--text);
+}
+
+/* Spaltenbreiten & Zeilenumbrüche */
+.table th:nth-child(1), .table td:nth-child(1) { /* Code */
+  width: 16%;
+  white-space: nowrap;
+}
+.table th:nth-child(2), .table td:nth-child(2) { /* Ort (voll, darf umbrechen) */
+  width: auto;
+  white-space: normal;
+  overflow-wrap: anywhere;   /* bricht lange Ortsnamen */
+}
+.table th:nth-child(3), .table td:nth-child(3) { /* BL (Kurzcode) */
+  width: 12%;
+  text-align: center;
+  white-space: nowrap;
+}
+.table th:nth-child(4), .table td:nth-child(4) { /* Datum kurz */
+  width: 26%;
+  white-space: nowrap;
+}
+
+/* Header-Interaktion */
 .table th { user-select: none; cursor: pointer; font-weight: 700; }
+
+/* Sichere Begrenzung */
+section.card, .table, .wrap { max-width: 100%; }

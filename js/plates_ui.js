@@ -12,22 +12,14 @@ export function renderTotals({ total, picked }) {
 export function renderTable(rows) {
   const tbody = $("#picks-body");
   tbody.innerHTML = "";
-  const fmt = (iso) =>
-    new Date(iso).toLocaleString("de-DE", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
 
   for (const r of rows) {
     const tr = document.createElement("tr");
     tr.innerHTML = `
-      <td>${r.code}</td>
+      <td>${escapeHtml(r.code)}</td>
       <td>${escapeHtml(r.label)}</td>
-      <td>${escapeHtml(r.state_name || r.state_code || "")}</td>
-      <td>${fmt(r.created_at)}</td>
+      <td title="${escapeHtml(r.state_name || r.state_code || "")}">${escapeHtml(r.state_code || "")}</td>
+      <td>${formatShortDateTime(r.created_at)}</td>
     `;
     tbody.appendChild(tr);
   }
@@ -40,7 +32,7 @@ export function sortRows(rows, key, dir) {
     let va, vb;
     if (key === "code") { va = a.code; vb = b.code; }
     else if (key === "label") { va = a.label; vb = b.label; }
-    else if (key === "state") { va = a.state_name || a.state_code; vb = b.state_name || b.state_code; }
+    else if (key === "state") { va = a.state_code || a.state_name; vb = b.state_code || b.state_name; }
     else if (key === "date") { va = a.created_at; vb = b.created_at; }
     va = (va ?? "").toString();
     vb = (vb ?? "").toString();
@@ -66,9 +58,23 @@ export function setError(el, msg) {
   el.textContent = msg || "";
 }
 
+/* Helpers */
 function escapeHtml(s) {
   return String(s ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;");
+}
+
+function pad2(n) { return String(n).padStart(2, "0"); }
+
+/* kompaktes Datum: 12.03.25 14:05 */
+function formatShortDateTime(iso) {
+  const d = new Date(iso);
+  const dd = pad2(d.getDate());
+  const mm = pad2(d.getMonth() + 1);
+  const yy = String(d.getFullYear()).slice(-2);
+  const hh = pad2(d.getHours());
+  const mi = pad2(d.getMinutes());
+  return `${dd}.${mm}.${yy} ${hh}:${mi}`;
 }
