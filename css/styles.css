@@ -208,12 +208,26 @@ button:active { transform: translateY(1px); background: var(--accent-press); }
   .search-wrap { min-width: 220px; }
 }
 
-/* Spalten-Optionen */
+/* Anzeige-Einstellungen (ausklappbar) */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.collapse {
+  display: none;
+  padding: 8px;
+  border: 1px solid var(--border);
+  background: var(--tile);
+  border-radius: 12px;
+}
+.collapse.open { display: block; }
+
 .options {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 6px 0 8px;
 }
 .options label {
   display: flex;
@@ -221,8 +235,8 @@ button:active { transform: translateY(1px); background: var(--accent-press); }
   gap: 8px;
   padding: 6px 10px;
   border: 1px solid var(--border);
-  background: var(--tile);
-  border-radius: 12px;
+  background: var(--card);
+  border-radius: 10px;
   font-weight: 600;
 }
 .options input[type="checkbox"] {

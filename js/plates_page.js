@@ -1,7 +1,7 @@
 // /js/plates_page.js
 import { requireAuthOrRedirect } from "./auth.js";
 import { fetchTotals, fetchPicks, pickPlate } from "./plates_api.js";
-import { $, renderTotals, renderTable, sortRows, filterRows, setError } from "./plates_ui.js";
+import { $, $$, renderTotals, renderTable, sortRows, filterRows, setError } from "./plates_ui.js";
 
 let ALL_ROWS = [];
 let sortKey = "date";      // Standard: Datum
@@ -28,8 +28,23 @@ async function boot() {
     $("#user-badge").textContent = "Kennzeichen";
   }
 
-  // Checkbox-Defaults setzen (falls HTML geändert wurde)
+  // Checkbox-Defaults setzen
   setInitialColumns(DEFAULT_COLS);
+
+  // Anzeige-Einstellungen toggeln
+  const toggleBtn = $("#btn-toggle-options");
+  const box = $("#options-box");
+  toggleBtn.addEventListener("click", () => {
+    const open = toggleBtn.getAttribute("aria-expanded") === "true";
+    toggleBtn.setAttribute("aria-expanded", String(!open));
+    if (open) {
+      box.classList.remove("open");
+      box.setAttribute("hidden", "");
+    } else {
+      box.classList.add("open");
+      box.removeAttribute("hidden");
+    }
+  });
 
   // Events: Pick, Suche
   $("#btn-pick").addEventListener("click", () => onPick(client));
@@ -44,11 +59,24 @@ async function boot() {
   // Events: Columns (mindestens eine Spalte aktiv lassen)
   $$(".options input[type=checkbox]").forEach((cb) => {
     cb.addEventListener("change", (e) => {
-      const cols = getSelectedColumns();
-      if (!e.target.checked && cols.length === 0) {
-        // letzte Spalte darf nicht abgewählt werden
-        e.target.checked = true;
-        return;
+      const colsBefore = getSelectedColumns();
+      const target = e.target;
+      if (!target.checked) {
+        // Prüfen, ob dies die letzte aktive wäre
+        if (colsBefore.length === 0) {
+          // Sicherheitsnetz, sollte nicht passieren
+          target.checked = true;
+        } else {
+          // Wenn vor dem Change nur 1 aktiv war und diese wird deaktiviert -> verhindern
+          const wasOnlyOne =
+            colsBefore.length === 0 /* already off */ ||
+            (colsBefore.length === 1 && colsBefore[0] === target.dataset.col);
+          if (wasOnlyOne) {
+            target.checked = true;
+          }
+        }
+      } else {
+        // OK, Häkchen gesetzt
       }
       render(); // neu zeichnen mit aktuellen Spalten
     });
@@ -84,11 +112,17 @@ async function refresh(client) {
 
 function render() {
   const cols = getSelectedColumns();
+  // Safety: falls (z. B. durch DOM-Manipulation) keine Spalten aktiv -> Standard setzen
+  if (cols.length === 0) {
+    setInitialColumns(DEFAULT_COLS);
+  }
+  const activeCols = getSelectedColumns();
+
   const q = $("#search-input").value || "";
   const filtered = filterRows(ALL_ROWS, q);
   const sorted = sortRows(filtered, sortKey, sortDir);
 
-  renderTable(sorted, cols, sortKey, sortDir);
+  renderTable(sorted, activeCols, sortKey, sortDir);
 
   // Header-Click-Events (nach dem Rendern neu binden)
   $$("#picks-head th[data-sort]").forEach((th) => {
