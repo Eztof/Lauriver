@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+  <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121826" media="(prefers-color-scheme: dark)">
+  <title>Lauriver – App</title>
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <header class="appbar" role="banner">
+    <div class="appbar-left">
+      <strong aria-label="App-Name">Lauriver</strong>
+    </div>
+    <div class="appbar-right">
+      <span id="user-badge" aria-live="polite">Anmelden…</span>
+      <button id="btn-logout" aria-label="Abmelden">Logout</button>
+    </div>
+  </header>
+
+  <main class="grid" role="main">
+    <a class="tile" href="#" id="nav-calendar" aria-label="Kalender (Platzhalter)">
+      <h2>Kalender</h2>
+      <p>Platzhalter (kommt später)</p>
+    </a>
+
+    <a class="tile" href="#" id="nav-plates" aria-label="Kennzeichen (Platzhalter)">
+      <h2>Kennzeichen</h2>
+      <p>Platzhalter (kommt später)</p>
+    </a>
+
+    <a class="tile" href="#" id="nav-packlist" aria-label="Packliste (Platzhalter)">
+      <h2>Packliste</h2>
+      <p>Platzhalter (kommt später)</p>
+    </a>
+  </main>
+
+  <!-- Supabase via ESM -->
+  <script type="module" src="https://esm.sh/@supabase/supabase-js@2"></script>
+
+  <!-- App-Module -->
+  <script type="module" src="./js/supabaseClient.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module" src="./js/db.js"></script>
+  <script type="module" src="./js/ui.js"></script>
+  <script type="module" src="./js/main_app.js"></script>
+</body>
+</html>

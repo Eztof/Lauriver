@@ -1,60 +1,58 @@
-// js/auth.js
-import { supabase } from "./supabaseClient.js";
-import { toast } from "./ui.js";
-import * as db from "./db.js";
-import { SITE_URL } from "./config.js";
-import { getDeviceId } from "./device.js";
+// /js/auth.js
+import { clientPersistent, clientSession, pickClient } from "./supabaseClient.js";
+import { ensureProfile, touchLogin } from "./db.js";
 
-export async function signUp({ email, password, displayName }) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: { display_name: displayName || null },
-      emailRedirectTo: `${SITE_URL}/#auth-callback`,
-    },
-  });
-  if (error) throw error;
+const USER_DOMAIN = "user.lauriver"; // künstliche Domain, existiert nicht
 
-  if (!data.session) toast("Registrierung gestartet – bitte E-Mail bestätigen.");
-  else toast("Registrierung erfolgreich – willkommen!");
-  return data;
+export function usernameToEmail(username) {
+  const clean = String(username || "").trim().toLowerCase();
+  if (!clean) throw new Error("Nutzername fehlt");
+  return `${clean}@${USER_DOMAIN}`;
 }
 
-export async function signIn({ email, password }) {
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+export async function signUp({ username, password, remember }) {
+  const client = remember ? clientPersistent : clientSession;
+  const email = usernameToEmail(username);
+
+  const { data, error } = await client.auth.signUp({ email, password });
   if (error) throw error;
-  toast("Willkommen zurück!");
-  return data;
+
+  // Profil anlegen/aktualisieren (1:1 zur auth.users-ID)
+  const authUser = data.user;
+  await ensureProfile(client, { auth_user_id: authUser.id, username });
+
+  // Login berühren + Auto-Weiterleitung
+  await touchLogin(client);
+  return { client, user: authUser };
+}
+
+export async function signIn({ username, password, remember }) {
+  const client = remember ? clientPersistent : clientSession;
+  const email = usernameToEmail(username);
+
+  const { data, error } = await client.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+
+  await touchLogin(client);
+  return { client, user: data.user };
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
-  toast("Abgemeldet.");
-  // Fallback-Redirect (zusätzlich zum Home-Button-Logout)
-  if (location.hash !== "#/") location.hash = "#/";
+  const { client } = await pickClient();
+  if (client) await client.auth.signOut();
 }
 
-export async function getSession() {
-  const { data, error } = await supabase.auth.getSession();
-  if (error) throw error;
-  return data.session;
-}
-
-// last_seen + Auth-Log
-supabase.auth.onAuthStateChange(async (event, session) => {
-  const user = session?.user || null;
-  try {
-    if (user && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED" || event === "USER_UPDATED")) {
-      await db.touchProfile(user.id);
-      await db.insertAuthLog({
-        event,
-        userAgent: navigator.userAgent,
-        deviceId: getDeviceId(),
-      });
-    }
-  } catch (e) {
-    console.warn("Auth state handling error:", e);
+// Guard: wenn keine Session → auf index.html
+export async function requireAuthOrRedirect() {
+  const { client } = await pickClient();
+  if (!client) {
+    window.location.href = "./index.html";
+    return null;
   }
-});
+  const { data } = await client.auth.getUser();
+  if (!data.user) {
+    window.location.href = "./index.html";
+    return null;
+  }
+  return { client, user: data.user };
+}
