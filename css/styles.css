@@ -208,37 +208,42 @@ button:active { transform: translateY(1px); background: var(--accent-press); }
   .search-wrap { min-width: 220px; }
 }
 
-/* Tabelle – schmal, ohne horizontales Scrollen */
-.table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+/* Spalten-Optionen */
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 8px;
+}
+.options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  background: var(--tile);
+  border-radius: 12px;
+  font-weight: 600;
+}
+.options input[type="checkbox"] {
+  width: 20px; height: 20px;
+}
+
+/* Tabelle – flexibel, ohne horizontales Scrollen */
+.table { width: 100%; border-collapse: collapse; }
 .table th, .table td {
-  padding: 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   text-align:left;
   color: var(--text);
+  vertical-align: top;
 }
-
-/* Spaltenbreiten & Zeilenumbrüche */
-.table th:nth-child(1), .table td:nth-child(1) { /* Code */
-  width: 16%;
-  white-space: nowrap;
-}
-.table th:nth-child(2), .table td:nth-child(2) { /* Ort (voll, darf umbrechen) */
-  width: auto;
-  white-space: normal;
-  overflow-wrap: anywhere;   /* bricht lange Ortsnamen */
-}
-.table th:nth-child(3), .table td:nth-child(3) { /* BL (Kurzcode) */
-  width: 12%;
-  text-align: center;
-  white-space: nowrap;
-}
-.table th:nth-child(4), .table td:nth-child(4) { /* Datum kurz */
-  width: 26%;
-  white-space: nowrap;
-}
-
-/* Header-Interaktion */
 .table th { user-select: none; cursor: pointer; font-weight: 700; }
+
+/* Zell-Utilities für Breiten/Umbruch */
+.cell-nowrap { white-space: nowrap; }
+.cell-center { text-align: center; }
+.cell-wrap { white-space: normal; overflow-wrap: anywhere; }
 
 /* Sichere Begrenzung */
 section.card, .table, .wrap { max-width: 100%; }

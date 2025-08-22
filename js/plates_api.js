@@ -7,13 +7,14 @@ export async function fetchTotals(client) {
   return { total: tot.count ?? 0, picked: pic.count ?? 0 };
 }
 
-// Liste aller Picks inkl. Stammdaten (Ort/Bundesland)
+// Liste aller Picks inkl. Stammdaten (Ort/Bundesland) + (optional) Spielername
 export async function fetchPicks(client) {
   const { data, error } = await client
     .from("plate_picks")
     .select(`
       id,
       plate_code,
+      user_id,
       created_at,
       plates_de (
         label,
@@ -25,14 +26,38 @@ export async function fetchPicks(client) {
 
   if (error) throw error;
 
-  return (data || []).map((r) => ({
+  const rows = (data || []).map((r) => ({
     id: r.id,
     code: r.plate_code,
+    user_id: r.user_id,
     label: r.plates_de?.label || "",
     state_code: r.plates_de?.state_code || "",
     state_name: r.plates_de?.state_name || "",
     created_at: r.created_at,
+    username: null, // wird unten ggf. befüllt
   }));
+
+  // Spieler-Namen versuchen zu laden (Profiles). Falls RLS blockiert -> stiller Fallback.
+  try {
+    const uids = Array.from(new Set(rows.map((r) => r.user_id).filter(Boolean)));
+    if (uids.length) {
+      const { data: profs, error: perr } = await client
+        .from("profiles")
+        .select("auth_user_id, username")
+        .in("auth_user_id", uids);
+      if (!perr && profs) {
+        const map = new Map(profs.map((p) => [p.auth_user_id, p.username]));
+        rows.forEach((r) => {
+          const name = map.get(r.user_id);
+          if (name) r.username = name;
+        });
+      }
+    }
+  } catch {
+    // ignorieren, wir zeigen dann eine gekürzte User-ID
+  }
+
+  return rows;
 }
 
 // Einen Pick auslösen (via RPC – sichert "nicht doppelt")

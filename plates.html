@@ -40,29 +40,33 @@
           <button id="btn-pick" aria-label="Kennzeichen picken">Pick</button>
         </div>
         <div class="search-wrap">
-          <input id="search-input" type="search" placeholder="Suchen (Code, Ort, BL)" aria-label="Suche" />
+          <input id="search-input" type="search" placeholder="Suchen (Code, Ort, BL, Spieler)" aria-label="Suche" />
         </div>
       </div>
       <p id="pick-error" class="error" aria-live="polite"></p>
     </section>
 
-    <!-- Liste -->
+    <!-- Liste + Spalten-Optionen -->
     <section class="card" aria-labelledby="list-title">
       <h2 id="list-title">Gepickte Kennzeichen</h2>
+
+      <fieldset class="options" aria-label="Spalten wählen (mindestens eine)">
+        <label><input type="checkbox" data-col="code" id="col-code" checked /> Code</label>
+        <label><input type="checkbox" data-col="label" id="col-label" checked /> Ort</label>
+        <label><input type="checkbox" data-col="state" id="col-state" /> BL</label>
+        <label><input type="checkbox" data-col="date" id="col-date" /> Datum</label>
+        <label><input type="checkbox" data-col="player" id="col-player" /> Spieler</label>
+      </fieldset>
+
       <table class="table" id="picks-table" aria-describedby="table-hint">
         <thead>
-          <tr>
-            <th data-sort="code" scope="col" aria-sort="none">Code ▲▼</th>
-            <th data-sort="label" scope="col" aria-sort="none">Ort ▲▼</th>
-            <th data-sort="state" scope="col" aria-sort="none">BL ▲▼</th>
-            <th data-sort="date" scope="col" aria-sort="descending">Datum ▲▼</th>
-          </tr>
+          <tr id="picks-head"><!-- JS füllt --></tr>
         </thead>
         <tbody id="picks-body">
           <!-- JS füllt -->
         </tbody>
       </table>
-      <p id="table-hint" class="muted-sm">Tippe auf die Spaltenüberschriften, um zu sortieren.</p>
+      <p id="table-hint" class="muted-sm">Tippe auf die Spaltenüberschriften, um zu sortieren. Standard: Datum (neueste zuerst).</p>
     </section>
   </main>
 
