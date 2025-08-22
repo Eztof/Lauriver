@@ -7,22 +7,6 @@
   <meta name="theme-color" content="#121826" media="(prefers-color-scheme: dark)">
   <title>Lauriver – Kennzeichen</title>
   <link rel="stylesheet" href="./css/styles.css" />
-  <style>
-    /* kleine Ergänzungen nur für diese Seite */
-    .wrap { padding: 16px; display: grid; gap: 16px; }
-    .bar { width: 100%; height: 10px; border-radius: 999px; background: var(--border); overflow: hidden; }
-    .bar > i { display:block; height: 100%; width: 0%; background: var(--accent); }
-    .kpi { display:flex; align-items: baseline; gap: 8px; }
-    .kpi strong { font-size: 1.8rem; }
-    .row { display:grid; gap: 10px; grid-template-columns: 1fr auto; }
-    .row > * { width: 100%; }
-    .input-inline { display:flex; gap: 8px; }
-    .input-inline input { flex: 1; }
-    .table { width: 100%; border-collapse: collapse; }
-    .table th, .table td { padding: 10px; border-bottom: 1px solid var(--border); text-align:left; }
-    .table th { user-select: none; cursor: pointer; }
-    .muted-sm { color: var(--muted); font-size: 0.9rem; }
-  </style>
 </head>
 <body>
   <header class="appbar">
@@ -36,7 +20,8 @@
 
   <main class="wrap">
     <!-- Fortschritt -->
-    <section class="card">
+    <section class="card" aria-labelledby="progress-title">
+      <h2 id="progress-title" class="sr-only">Fortschritt</h2>
       <div class="kpi">
         <strong><span id="count-picked">0</span> / <span id="count-total">768</span></strong>
         <span class="muted-sm">gepickt</span>
@@ -47,30 +32,30 @@
     </section>
 
     <!-- Eingabe -->
-    <section class="card">
-      <h2>Kennzeichen eintragen</h2>
+    <section class="card" aria-labelledby="input-title">
+      <h2 id="input-title">Kennzeichen eintragen</h2>
       <div class="row">
         <div class="input-inline">
-          <input id="plate-input" type="text" placeholder="z. B. ABG" inputmode="latin" maxlength="4" />
-          <button id="btn-pick">Pick</button>
+          <input id="plate-input" type="text" placeholder="z. B. ABG" inputmode="latin" maxlength="4" aria-label="Kennzeichen-Code" />
+          <button id="btn-pick" aria-label="Kennzeichen picken">Pick</button>
         </div>
-        <div style="min-width:160px">
-          <input id="search-input" type="search" placeholder="Suchen (Code, Ort, Land)" />
+        <div class="search-wrap">
+          <input id="search-input" type="search" placeholder="Suchen (Code, Ort, Bundesland)" aria-label="Suche" />
         </div>
       </div>
       <p id="pick-error" class="error" aria-live="polite"></p>
     </section>
 
     <!-- Liste -->
-    <section class="card">
-      <h2>Gepickte Kennzeichen</h2>
+    <section class="card" aria-labelledby="list-title">
+      <h2 id="list-title">Gepickte Kennzeichen</h2>
       <table class="table" id="picks-table" aria-describedby="table-hint">
         <thead>
           <tr>
-            <th data-sort="code">Code ▲▼</th>
-            <th data-sort="label">Ort ▲▼</th>
-            <th data-sort="state">Bundesland ▲▼</th>
-            <th data-sort="date">Datum ▲▼</th>
+            <th data-sort="code" scope="col" aria-sort="none">Code ▲▼</th>
+            <th data-sort="label" scope="col" aria-sort="none">Ort ▲▼</th>
+            <th data-sort="state" scope="col" aria-sort="none">Bundesland ▲▼</th>
+            <th data-sort="date" scope="col" aria-sort="descending">Datum ▲▼</th>
           </tr>
         </thead>
         <tbody id="picks-body">

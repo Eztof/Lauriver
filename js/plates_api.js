@@ -4,11 +4,7 @@
 export async function fetchTotals(client) {
   const tot = await client.from("plates_de").select("code", { count: "exact", head: true });
   const pic = await client.from("plate_picks").select("id", { count: "exact", head: true });
-
-  return {
-    total: tot.count ?? 0,
-    picked: pic.count ?? 0,
-  };
+  return { total: tot.count ?? 0, picked: pic.count ?? 0 };
 }
 
 // Liste aller Picks inkl. Stammdaten (Ort/Bundesland)
@@ -19,7 +15,7 @@ export async function fetchPicks(client) {
       id,
       plate_code,
       created_at,
-      plates_de:plate_code (
+      plates_de (
         label,
         state_code,
         state_name
