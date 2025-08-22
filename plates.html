@@ -1,263 +1,94 @@
-/* ===================== Theme Tokens (mobil-first, hohe Kontraste) ===================== */
-:root {
-  --bg: #ffffff;
-  --text: #111827;     /* sehr dunkel */
-  --muted: #374151;    /* dunkler für Lesbarkeit */
-  --card: #ffffff;
-  --tile: #f8fafc;     /* sehr helles Grau */
-  --border: #d1d5db;   /* deutlicher Rand */
-  --accent: #1d4ed8;   /* dunkleres Blau für besseren Kontrast im Light-Mode */
-  --accent-press: #1e40af;
-  --error: #b00020;
-  --radius: 16px;
-  --shadow: 0 8px 28px rgba(2, 6, 23, 0.08);
-}
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#121826" media="(prefers-color-scheme: dark)">
+  <title>Lauriver – Kennzeichen</title>
+  <!-- Wichtig: das ist nur der Link zur CSS-Datei, nicht der Dateiinhalt -->
+  <link rel="stylesheet" href="./css/styles.css" />
+</head>
+<body>
+  <header class="appbar">
+    <div class="appbar-left">
+      <a href="./app.html" class="muted" aria-label="Zurück zur Übersicht">← Zurück</a>
+    </div>
+    <div class="appbar-right">
+      <span id="user-badge">Kennzeichen</span>
+    </div>
+  </header>
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0f19;
-    --text: #e6eaf2;
-    --muted: #a3b2c7;
-    --card: #121826;
-    --tile: #0f172a;
-    --border: #243246;
-    --accent: #3b82f6;
-    --accent-press: #1d4ed8;
-    --shadow: 0 10px 30px rgba(0,0,0,0.6);
-  }
-}
+  <main class="wrap">
+    <!-- Fortschritt -->
+    <section class="card" aria-labelledby="progress-title">
+      <h2 id="progress-title" class="sr-only">Fortschritt</h2>
+      <div class="kpi">
+        <strong><span id="count-picked">0</span> / <span id="count-total">768</span></strong>
+        <span class="muted-sm">gepickt</span>
+      </div>
+      <div class="bar" aria-label="Fortschritt">
+        <i id="progress"></i>
+      </div>
+    </section>
 
-/* ===================== Base ===================== */
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font: 500 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  color-scheme: light dark;
-  overflow-x: hidden;           /* kein horizontales Scrollen */
-}
+    <!-- Eingabe -->
+    <section class="card" aria-labelledby="input-title">
+      <h2 id="input-title">Kennzeichen eintragen</h2>
+      <div class="row">
+        <div class="input-inline">
+          <input id="plate-input" type="text" placeholder="z. B. ABG" inputmode="latin" maxlength="4" aria-label="Kennzeichen-Code" />
+          <button id="btn-pick" aria-label="Kennzeichen picken">Pick</button>
+        </div>
+        <div class="search-wrap">
+          <input id="search-input" type="search" placeholder="Suchen (Code, Ort, BL, Spieler)" aria-label="Suche" />
+        </div>
+      </div>
+      <p id="pick-error" class="error" aria-live="polite"></p>
+    </section>
 
-a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-.sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
-.muted { color: var(--muted); }
-.muted-sm { color: var(--muted); font-size: 0.9rem; }
-.error { color: var(--error); min-height: 1.5em; }
+    <!-- Liste + Anzeige-Einstellungen -->
+    <section class="card" aria-labelledby="list-title">
+      <h2 id="list-title">Gepickte Kennzeichen</h2>
 
-/* ===================== Layout: Auth (index.html) ===================== */
-.center {
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-}
+      <div class="toolbar">
+        <button id="btn-toggle-options" aria-expanded="false" aria-controls="options-box">
+          Anzeige-Einstellungen
+        </button>
+      </div>
 
-.card {
-  width: min(520px, 94%);
-  padding: 24px;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: var(--card);
-  box-shadow: var(--shadow);
-}
+      <div id="options-box" class="collapse" hidden>
+        <fieldset class="options" aria-label="Spalten wählen (mindestens eine)">
+          <label><input type="checkbox" data-col="code" id="col-code" checked /> Code</label>
+          <label><input type="checkbox" data-col="label" id="col-label" checked /> Ort</label>
+          <label><input type="checkbox" data-col="state" id="col-state" /> BL</label>
+          <label><input type="checkbox" data-col="date" id="col-date" /> Datum</label>
+          <label><input type="checkbox" data-col="player" id="col-player" /> Spieler</label>
+        </fieldset>
+      </div>
 
-h1, h2 { margin: 0 0 8px; font-weight: 700; }
-p { margin: 0; }
+      <table class="table" id="picks-table">
+        <thead>
+          <tr id="picks-head"><!-- per JS gefüllt --></tr>
+        </thead>
+        <tbody id="picks-body">
+          <!-- per JS gefüllt -->
+        </tbody>
+      </table>
+    </section>
+  </main>
 
-/* Tabs (Login/Registrieren) – mehr Kontrast im Light Mode */
-.tabs { display: flex; gap: 8px; margin: 8px 0 16px; }
-.tab {
-  flex: 1;
-  padding: 12px 10px;
-  border-radius: 12px;
-  border: 2px solid var(--border);
-  background: var(--tile);
-  color: var(--text);
-  cursor: pointer;
-  font-weight: 700;
-  text-align: center;
-}
-.tab.active {
-  background: #e0eaff;
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 2px rgba(29, 78, 216, 0.25);
-}
+  <!-- Supabase SDK -->
+  <script type="module" src="https://esm.sh/@supabase/supabase-js@2"></script>
 
-/* Forms */
-.form { display: grid; gap: 14px; }
-.form.hidden { display: none; }
-label { display: grid; gap: 6px; font-size: 14px; }
+  <!-- App-Module (müssen als separate Dateien existieren) -->
+  <script type="module" src="./js/supabaseClient.js"></script>
+  <script type="module" src="./js/auth.js"></script>
+  <script type="module" src="./js/db.js"></script>
 
-input, button {
-  height: 48px;              /* große Touch-Fläche */
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  font-size: 16px;           /* >=16px verhindert Zoom auf iOS */
-}
-
-input {
-  padding: 10px 12px;
-  background: var(--card);
-  color: var(--text);
-  width: 100%;
-}
-input::placeholder { color: var(--muted); }
-
-input:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.25);
-}
-
-/* Buttons – extra Kontrast im Light Mode */
-button {
-  padding: 0 16px;
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
-  font-weight: 800;
-  letter-spacing: 0.2px;
-  cursor: pointer;
-  transition: transform 80ms, filter 120ms, background 120ms;
-  touch-action: manipulation;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.08);
-}
-button:hover { filter: brightness(1.06); }
-button:active { transform: translateY(1px); background: var(--accent-press); }
-
-.remember {
-  display: flex; align-items: center; gap: 10px;
-  font-size: 14px; color: var(--muted);
-}
-.remember input { height: 20px; width: 20px; }
-
-/* ===================== App-Bar & Grid (app.html / plates.html) ===================== */
-.appbar {
-  position: sticky; top: 0;
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 12px;
-  padding: calc(10px + env(safe-area-inset-top)) 14px 10px;
-  border-bottom: 1px solid var(--border);
-  background: var(--card);
-  backdrop-filter: blur(8px);
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: 1fr;       /* mobil: 1 Spalte */
-  gap: 14px;
-  padding: 16px;
-}
-
-.tile {
-  display: block;
-  padding: 16px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--tile);
-  color: var(--text);
-  text-decoration: none;
-  min-height: 84px;
-  box-shadow: var(--shadow);
-  transition: transform 120ms, box-shadow 120ms;
-}
-.tile:hover { transform: translateY(-1px); }
-.tile h2 { font-size: 1.1rem; margin-bottom: 6px; }
-.tile p { color: var(--muted); }
-
-/* Desktop/Tablets: Spalten automatisch */
-@media (min-width: 640px) {
-  .grid { grid-template-columns: repeat(2, minmax(220px, 1fr)); }
-}
-@media (min-width: 960px) {
-  .grid { grid-template-columns: repeat(3, minmax(220px, 1fr)); }
-}
-
-/* Fokus-Sichtbarkeit (Keyboard) */
-:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* ===================== Kennzeichen-Seite (plates.html) ===================== */
-.wrap {
-  padding: 16px;
-  display: grid;
-  gap: 16px;
-  max-width: 640px;    /* mobilfreundlich, schmal */
-  margin: 0 auto;      /* zentrieren */
-}
-
-/* Fortschritt */
-.kpi { display:flex; align-items: baseline; gap: 8px; }
-.kpi strong { font-size: 1.8rem; }
-.bar { width: 100%; height: 10px; border-radius: 999px; background: var(--border); overflow: hidden; margin-top: 10px; }
-.bar > i { display:block; height: 100%; width: 0%; background: var(--accent); }
-
-/* Eingabezeilen */
-.row { display:grid; gap: 10px; grid-template-columns: 1fr; }
-.row > * { width: 100%; }
-.input-inline { display:flex; gap: 8px; }
-.input-inline input { flex: 1; }
-.search-wrap { min-width: 100%; }
-@media (min-width: 520px) {
-  .row { grid-template-columns: 1fr auto; }
-  .search-wrap { min-width: 220px; }
-}
-
-/* Anzeige-Einstellungen (ausklappbar) */
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-.collapse {
-  display: none;
-  padding: 8px;
-  border: 1px solid var(--border);
-  background: var(--tile);
-  border-radius: 12px;
-}
-.collapse.open { display: block; }
-
-.options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.options label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border: 1px solid var(--border);
-  background: var(--card);
-  border-radius: 10px;
-  font-weight: 600;
-}
-.options input[type="checkbox"] {
-  width: 20px; height: 20px;
-}
-
-/* Tabelle – flexibel, ohne horizontales Scrollen */
-.table { width: 100%; border-collapse: collapse; }
-.table th, .table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
-  text-align:left;
-  color: var(--text);
-  vertical-align: top;
-}
-.table th { user-select: none; cursor: pointer; font-weight: 700; }
-
-/* Zell-Utilities für Breiten/Umbruch */
-.cell-nowrap { white-space: nowrap; }
-.cell-center { text-align: center; }
-.cell-wrap { white-space: normal; overflow-wrap: anywhere; }
-
-/* Sichere Begrenzung */
-section.card, .table, .wrap { max-width: 100%; }
+  <!-- Kennzeichen-Module -->
+  <script type="module" src="./js/plates_api.js"></script>
+  <script type="module" src="./js/plates_ui.js"></script>
+  <script type="module" src="./js/plates_page.js"></script>
+</body>
+</html>
