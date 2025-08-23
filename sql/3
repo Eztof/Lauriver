@@ -1,0 +1,409 @@
+-- ===== Import alter Spielfortschritt in plate_picks =====
+-- Hinweis:
+-- - created_at wird aus deutschem Datum mit 'UTC+2' korrekt als timestamptz gebaut.
+-- - Falls das auth.users-UUID in dieser Instanz nicht existiert, schlägt der FK fehl.
+-- - Bereits vorhandene plate_code-Einträge werden ignoriert (ON CONFLICT DO NOTHING).
+with
+  raw_csv as (
+    select
+      $$plate_code,created_at,user_id
+AA,13. Juli 2025 um 14:59:35 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+AB,13. Juli 2025 um 15:18:48 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ABG,13. Juli 2025 um 19:33:46 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ABI,15. August 2025 um 12:33:13 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ABR,25. Juli 2025 um 09:47:02 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+AC,13. Juli 2025 um 15:16:31 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+AIC,1. August 2025 um 18:27:27 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ALF,31. Juli 2025 um 16:27:31 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ALZ,15. August 2025 um 11:29:28 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ANA,15. August 2025 um 13:27:04 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+AP,13. Juli 2025 um 19:45:09 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+APD,7. August 2025 um 22:13:06 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ARN,17. August 2025 um 13:23:57 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ART,17. August 2025 um 13:24:04 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+AS,15. August 2025 um 12:55:49 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+AU,15. August 2025 um 14:26:29 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+AUR,13. Juli 2025 um 15:11:58 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+AW,13. Juli 2025 um 19:03:59 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+B,13. Juli 2025 um 14:48:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BA,13. Juli 2025 um 14:26:30 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BAD,15. August 2025 um 12:02:32 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BAR,7. August 2025 um 16:25:00 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BB,13. Juli 2025 um 14:18:04 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BC,15. August 2025 um 11:29:50 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BF,13. Juli 2025 um 14:45:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BGL,7. August 2025 um 23:55:10 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BI,13. Juli 2025 um 14:13:58 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BIN,7. August 2025 um 23:55:29 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BIW,15. August 2025 um 14:21:19 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BK,13. Juli 2025 um 19:57:20 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BLK,13. Juli 2025 um 15:36:34 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BM,13. Juli 2025 um 19:58:34 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BN,1. August 2025 um 15:21:30 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BNA,15. August 2025 um 13:25:47 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BO,13. Juli 2025 um 15:16:20 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BOH,13. Juli 2025 um 19:36:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BRA,15. August 2025 um 14:20:02 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BRF,15. August 2025 um 11:44:24 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BS,13. Juli 2025 um 17:05:09 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BSB,13. Juli 2025 um 14:43:16 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BSN,13. Juli 2025 um 14:43:12 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BTF,15. August 2025 um 11:44:30 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BZ,15. August 2025 um 12:16:55 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+BÜR,13. Juli 2025 um 14:25:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+C,3. August 2025 um 13:18:34 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+CB,15. August 2025 um 13:24:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+CLP,13. Juli 2025 um 20:08:30 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+CO,13. Juli 2025 um 14:58:52 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+COC,13. Juli 2025 um 14:18:56 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+COE,13. Juli 2025 um 19:48:23 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+CUX,13. Juli 2025 um 20:01:11 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+D,13. Juli 2025 um 19:33:50 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DA,13. Juli 2025 um 14:09:26 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DAU,1. August 2025 um 18:05:52 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DBR,25. Juli 2025 um 09:46:58 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DD,25. Juli 2025 um 10:52:16 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DEG,15. August 2025 um 13:24:26 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DEL,13. Juli 2025 um 15:19:24 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DGF,13. Juli 2025 um 19:32:05 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DI,13. Juli 2025 um 19:42:00 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DIL,13. Juli 2025 um 15:18:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DN,13. Juli 2025 um 15:02:59 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DO,13. Juli 2025 um 14:59:09 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DON,13. Juli 2025 um 14:14:11 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DU,13. Juli 2025 um 19:34:25 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DZ,15. August 2025 um 13:28:09 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+DÜW,13. Juli 2025 um 14:23:43 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+E,13. Juli 2025 um 15:10:34 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+EBE,15. August 2025 um 13:05:57 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ECK,26. Juli 2025 um 13:23:23 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ED,1. August 2025 um 17:56:13 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+EE,29. Juli 2025 um 14:03:33 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+EF,13. Juli 2025 um 14:46:16 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+EIC,15. August 2025 um 11:23:19 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+EIL,15. August 2025 um 11:59:02 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+EIN,13. Juli 2025 um 15:42:07 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+EN,7. August 2025 um 15:49:59 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ER,13. Juli 2025 um 19:49:38 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ERH,13. Juli 2025 um 14:19:07 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ERZ,15. August 2025 um 14:20:11 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ES,15. August 2025 um 12:50:37 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ESW,13. Juli 2025 um 17:18:09 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+EU,15. August 2025 um 13:12:35 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+F,13. Juli 2025 um 14:26:34 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FB,13. Juli 2025 um 14:51:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FD,13. Juli 2025 um 14:14:42 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FDB,13. Juli 2025 um 14:57:06 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FDS,19. Juli 2025 um 12:14:26 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FFB,15. August 2025 um 11:22:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FKB,13. Juli 2025 um 17:07:31 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FL,25. Juli 2025 um 09:47:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FN,13. Juli 2025 um 14:47:49 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FZ,13. Juli 2025 um 17:18:13 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+FÜ,15. August 2025 um 14:58:22 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GAN,17. August 2025 um 13:16:28 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GAP,15. August 2025 um 11:33:27 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GC,15. August 2025 um 13:27:12 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GE,13. Juli 2025 um 14:57:38 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GEO,10. August 2025 um 18:07:18 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GER,1. August 2025 um 18:19:20 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GF,13. Juli 2025 um 20:08:50 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GG,13. Juli 2025 um 14:22:42 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GHA,15. August 2025 um 14:11:11 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GI,13. Juli 2025 um 18:48:55 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GL,29. Juli 2025 um 14:04:14 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GLA,13. Juli 2025 um 16:59:07 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GM,15. August 2025 um 13:20:07 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GN,13. Juli 2025 um 14:42:32 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GR,15. August 2025 um 13:14:42 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GRM,15. August 2025 um 13:28:58 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GT,13. Juli 2025 um 14:14:01 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GW,15. August 2025 um 13:08:33 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+GÖ,13. Juli 2025 um 15:14:20 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+H,1. August 2025 um 15:11:31 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HAL,15. August 2025 um 12:16:52 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HAM,13. Juli 2025 um 14:21:06 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HB,13. Juli 2025 um 20:04:37 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HBN,13. Juli 2025 um 15:01:46 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HD,13. Juli 2025 um 14:23:39 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HEF,13. Juli 2025 um 18:55:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HEI,13. Juli 2025 um 15:12:18 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HET,17. August 2025 um 13:25:39 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HF,12. Juli 2025 um 19:46:26 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HG,13. Juli 2025 um 16:59:28 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HH,13. Juli 2025 um 14:25:58 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HHM,15. August 2025 um 13:26:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HI,15. August 2025 um 11:39:40 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HK,31. Juli 2025 um 16:58:56 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HL,29. Juli 2025 um 12:54:35 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HM,13. Juli 2025 um 19:16:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HMÜ,11. August 2025 um 15:28:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HN,13. Juli 2025 um 16:59:04 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HO,15. August 2025 um 13:43:22 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HOL,13. Juli 2025 um 19:20:07 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HOT,15. August 2025 um 13:24:33 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HR,15. August 2025 um 11:29:56 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HRO,17. August 2025 um 16:01:04 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HS,31. Juli 2025 um 15:43:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HSK,13. Juli 2025 um 14:16:57 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HU,4. August 2025 um 17:50:49 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+HX,13. Juli 2025 um 14:07:32 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ILL,1. August 2025 um 17:55:50 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+IN,13. Juli 2025 um 15:18:27 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+IZ,15. August 2025 um 11:38:30 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+J,13. Juli 2025 um 14:47:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+JHL,15. August 2025 um 12:45:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+JL,15. August 2025 um 12:45:56 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+K,13. Juli 2025 um 15:10:44 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KB,13. Juli 2025 um 15:09:30 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KG,15. August 2025 um 11:34:03 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KH,13. Juli 2025 um 17:10:38 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KI,25. Juli 2025 um 09:46:47 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KLE,13. Juli 2025 um 15:19:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KM,15. August 2025 um 14:31:59 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KS,13. Juli 2025 um 14:19:02 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KÖN,15. August 2025 um 12:54:46 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+KÖT,15. August 2025 um 12:38:05 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+L,13. Juli 2025 um 14:57:35 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LAU,15. August 2025 um 11:00:41 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LB,17. August 2025 um 15:35:34 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LDK,13. Juli 2025 um 15:10:12 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LEF,17. August 2025 um 13:25:44 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LER,13. Juli 2025 um 20:07:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LG,13. Juli 2025 um 17:07:55 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LH,13. Juli 2025 um 15:10:39 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LI,13. Juli 2025 um 14:25:55 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LP,13. Juli 2025 um 14:18:28 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LU,15. August 2025 um 11:56:11 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LWL,15. August 2025 um 11:28:37 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+LÖ,13. Juli 2025 um 14:53:18 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MA,13. Juli 2025 um 14:23:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MD,15. August 2025 um 11:26:37 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ME,13. Juli 2025 um 14:16:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MEI,15. August 2025 um 12:55:34 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MEL,13. Juli 2025 um 19:59:08 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MER,15. August 2025 um 13:17:45 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MGH,13. Juli 2025 um 14:59:15 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MHL,15. August 2025 um 10:58:39 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MI,13. Juli 2025 um 19:49:49 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MIL,13. Juli 2025 um 15:01:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MKK,13. Juli 2025 um 14:58:43 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MO,7. August 2025 um 14:47:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MOS,15. August 2025 um 11:24:05 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MQ,13. Juli 2025 um 19:50:52 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MR,13. Juli 2025 um 14:53:04 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MS,13. Juli 2025 um 14:51:06 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MSE,15. August 2025 um 14:19:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MSP,13. Juli 2025 um 14:17:11 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MTK,13. Juli 2025 um 14:07:38 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MW,15. August 2025 um 13:20:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MY,13. Juli 2025 um 19:42:19 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+MZ,13. Juli 2025 um 14:15:40 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+N,13. Juli 2025 um 14:49:35 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NDH,15. August 2025 um 11:53:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NE,13. Juli 2025 um 14:57:15 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NEA,7. August 2025 um 15:40:23 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NEW,15. August 2025 um 15:10:35 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NI,13. Juli 2025 um 15:16:50 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NM,15. August 2025 um 10:59:06 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NMS,25. Juli 2025 um 09:46:52 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NOH,13. Juli 2025 um 14:47:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NOM,13. Juli 2025 um 14:43:51 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NOR,13. Juli 2025 um 20:10:49 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NP,7. August 2025 um 12:09:43 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NU,13. Juli 2025 um 17:05:06 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+NWM,15. August 2025 um 11:00:19 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OA,7. August 2025 um 15:40:45 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OAL,17. August 2025 um 15:51:26 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OB,15. August 2025 um 12:26:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OD,13. Juli 2025 um 14:48:24 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OF,15. August 2025 um 11:29:18 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OH,7. August 2025 um 15:40:27 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OHA,17. August 2025 um 13:26:07 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OHV,7. August 2025 um 21:17:27 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OHZ,31. Juli 2025 um 15:27:02 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OL,13. Juli 2025 um 20:06:44 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OPR,7. August 2025 um 11:25:06 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OS,13. Juli 2025 um 19:59:03 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OSL,13. Juli 2025 um 19:32:01 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+OZ,17. August 2025 um 13:11:06 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+P,13. Juli 2025 um 14:59:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+PA,15. August 2025 um 14:21:37 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+PB,13. Juli 2025 um 19:59:12 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+PE,13. Juli 2025 um 19:55:48 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+PF,13. Juli 2025 um 14:45:33 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+PI,31. Juli 2025 um 14:55:24 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+PIR,15. August 2025 um 13:13:26 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+PM,29. Juli 2025 um 14:02:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+PS,7. August 2025 um 20:23:56 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+QFT,15. August 2025 um 12:50:30 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+QLB,19. Juli 2025 um 12:12:09 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RA,15. August 2025 um 11:49:24 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RBS,31. Juli 2025 um 15:36:14 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RD,7. August 2025 um 21:58:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RH,31. Juli 2025 um 15:33:57 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RIE,15. August 2025 um 14:26:32 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RO,31. Juli 2025 um 15:31:19 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ROF,13. Juli 2025 um 18:49:44 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ROW,13. Juli 2025 um 14:11:56 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RP,26. Juli 2025 um 13:57:43 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RU,15. August 2025 um 12:38:27 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RV,13. Juli 2025 um 20:00:18 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RZ,15. August 2025 um 13:07:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+RÜD,13. Juli 2025 um 19:41:45 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+S,13. Juli 2025 um 15:11:55 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SAD,15. August 2025 um 13:39:12 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SDH,15. August 2025 um 11:39:51 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SEE,1. August 2025 um 17:55:46 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SFA,15. August 2025 um 12:53:57 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SFB,15. August 2025 um 15:10:32 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SG,13. Juli 2025 um 15:25:11 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SHA,7. August 2025 um 10:56:16 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SHG,13. Juli 2025 um 15:42:28 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SIG,13. Juli 2025 um 14:21:40 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SK,15. August 2025 um 11:40:47 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SL,25. Juli 2025 um 09:47:18 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SLS,25. Juli 2025 um 10:59:40 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SM,15. August 2025 um 14:19:24 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SN,1. August 2025 um 14:21:10 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SO,13. Juli 2025 um 14:19:13 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SOK,31. Juli 2025 um 15:39:18 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SON,15. August 2025 um 14:21:45 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ST,13. Juli 2025 um 19:39:52 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+STA,15. August 2025 um 12:15:30 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+STL,15. August 2025 um 13:25:18 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SU,13. Juli 2025 um 20:01:58 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SW,13. Juli 2025 um 16:59:00 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SWA,15. August 2025 um 11:39:10 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SWL,15. August 2025 um 12:38:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SZ,13. Juli 2025 um 19:27:36 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SZB,15. August 2025 um 15:10:26 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+SÖM,15. August 2025 um 11:44:33 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TBB,15. August 2025 um 11:07:24 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TBD,15. August 2025 um 12:52:00 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TDO,15. August 2025 um 12:22:16 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TE,13. Juli 2025 um 19:49:46 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TF,15. August 2025 um 12:31:12 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TR,13. Juli 2025 um 14:19:47 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TS,15. August 2025 um 13:08:21 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TUT,15. August 2025 um 11:07:40 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+TÜ,13. Juli 2025 um 19:51:07 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+UE,31. Juli 2025 um 18:59:34 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+UH,15. August 2025 um 12:36:19 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+UN,15. August 2025 um 12:16:05 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+V,15. August 2025 um 13:30:22 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+VB,15. August 2025 um 11:27:35 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+VEC,13. Juli 2025 um 19:36:41 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+VER,15. August 2025 um 13:43:26 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+VIE,13. Juli 2025 um 19:43:44 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+W,13. Juli 2025 um 15:09:33 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WA,13. Juli 2025 um 14:05:53 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WAF,15. August 2025 um 13:16:55 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WAK,13. Juli 2025 um 14:13:43 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WAN,13. Juli 2025 um 19:43:49 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WAR,13. Juli 2025 um 14:08:42 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WEN,15. August 2025 um 13:14:16 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WEST,7. August 2025 um 23:55:01 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WI,13. Juli 2025 um 19:34:54 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WIT,13. Juli 2025 um 15:37:17 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WIZ,15. August 2025 um 11:27:46 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WL,25. Juli 2025 um 09:47:10 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WM,13. Juli 2025 um 19:09:27 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WOB,13. Juli 2025 um 17:10:42 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WOH,13. Juli 2025 um 14:20:12 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WSF,15. August 2025 um 13:03:44 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WST,13. Juli 2025 um 20:08:11 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WTM,20. Juli 2025 um 19:30:20 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WW,15. August 2025 um 11:28:16 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WZ,13. Juli 2025 um 19:23:44 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+WÜ,13. Juli 2025 um 15:00:39 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+Z,15. August 2025 um 13:06:09 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ZI,15. August 2025 um 14:21:51 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ZIG,13. Juli 2025 um 15:36:56 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a
+ZO,17. August 2025 um 16:00:27 UTC+2,681bf038-9c73-475e-9f85-af8fc3a1951a$$ as csv
+  ),
+  lines as (
+    select
+      trim(
+        both
+        from
+          l
+      ) as line
+    from
+      raw_csv,
+      regexp_split_to_table(csv, E'\r?\n') as l
+  ),
+  parts as (
+    select
+      split_part(line, ',', 1) as plate_code,
+      split_part(line, ',', 2) as created_de,
+      split_part(line, ',', 3) as user_id
+    from
+      lines
+    where
+      line <> ''
+      and line !~* '^plate_code'
+  ),
+  parsed as (
+    select
+      upper(trim(plate_code)) as plate_code,
+      user_id::uuid as user_id,
+      regexp_match(
+        created_de,
+        '^\s*(\d{1,2})\.\s*([A-Za-zÄÖÜäöü]+)\s*(\d{4})\s*um\s*(\d{1,2}):(\d{2}):(\d{2})\s*UTC\+(\d+)\s*$'
+      ) as m
+    from
+      parts
+  ),
+  prepared as (
+    select
+      plate_code,
+      user_id,
+      make_timestamptz(
+        (m) [3]::int,
+        case lower((m) [2])
+          when 'januar' then 1
+          when 'februar' then 2
+          when 'märz' then 3
+          when 'maerz' then 3
+          when 'april' then 4
+          when 'mai' then 5
+          when 'juni' then 6
+          when 'juli' then 7
+          when 'august' then 8
+          when 'september' then 9
+          when 'oktober' then 10
+          when 'november' then 11
+          when 'dezember' then 12
+          else null
+        end,
+        (m) [1]::int,
+        (m) [4]::int,
+        (m) [5]::int,
+        (m) [6]::int,
+        'UTC+' || (m) [7]
+      ) as created_at
+    from
+      parsed
+  )
+insert into
+  public.plate_picks (plate_code, user_id, created_at)
+select
+  p.plate_code,
+  p.user_id,
+  p.created_at
+from
+  prepared p
+where
+  p.created_at is not null
+  and exists (
+    select
+      1
+    from
+      public.plates_de d
+    where
+      d.code = p.plate_code
+  )
+on conflict (plate_code) do nothing;
+
+-- Fertig.
